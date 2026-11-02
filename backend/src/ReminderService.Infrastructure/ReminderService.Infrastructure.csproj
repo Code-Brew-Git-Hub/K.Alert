@@ -6,4 +6,9 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\ReminderService.Application\ReminderService.Application.csproj" />
+      <ProjectReference Include="..\ReminderService.Domain\ReminderService.Domain.csproj" />
+    </ItemGroup>
+
 </Project>
