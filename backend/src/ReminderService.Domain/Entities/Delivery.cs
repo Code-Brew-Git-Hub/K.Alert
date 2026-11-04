@@ -11,12 +11,12 @@ public class Delivery
     public string DestinationSnapshot { get; set; }
     public DeliveryStatus Status { get; set; }
     public int AttemptCount { get; set; }
-    public DateTime NextAttemptAt { get; set; }
-    public DateTime LeaseUntil { get; set; }
-    public Guid ClaimToken { get; set; }
-    public DateTime SentAt { get; set; }
-    public string LastError { get; set; }
-    public string ExternalMessageId { get; set; }
+    public DateTime? NextAttemptAt { get; set; }
+    public DateTime? LeaseUntil { get; set; }
+    public Guid? ClaimToken { get; set; }
+    public DateTime? SentAt { get; set; }
+    public string? LastError { get; set; }
+    public string? ExternalMessageId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

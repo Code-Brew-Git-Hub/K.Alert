@@ -11,5 +11,5 @@ public class DeliveryChannel
     public string Settings { get; set; }
     public bool IsEnabled { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime DeletedAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

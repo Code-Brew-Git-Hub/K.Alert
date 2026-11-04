@@ -12,9 +12,9 @@ public class Reminder
     public TimeOnly LocalTime { get; set; }
     public string TimeZoneId { get; set; }
     public RepeatUnit RepeatUnit { get; set; }
-    public int RepeatInterval { get; set; }
-    public DateOnly EndLocalDate { get; set; }
-    public DateTime NextOccurrenceAt { get; set; }
+    public int? RepeatInterval { get; set; }
+    public DateOnly? EndLocalDate { get; set; }
+    public DateTime? NextOccurrenceAt { get; set; }
     public ReminderStatus Status { get; set; }
     public Guid CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
