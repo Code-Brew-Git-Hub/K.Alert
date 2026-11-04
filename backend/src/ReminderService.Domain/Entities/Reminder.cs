@@ -16,7 +16,7 @@ public class Reminder
     public DateOnly? EndLocalDate { get; set; }
     public DateTime? NextOccurrenceAt { get; set; }
     public ReminderStatus Status { get; set; }
-    public Guid CreatedBy { get; set; }
+    public Guid CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public long Version { get; set; }
