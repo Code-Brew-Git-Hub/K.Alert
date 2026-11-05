@@ -37,7 +37,7 @@ public class UserTests
     [TestCase("\t\n", TestName = "Constructor_WhitespaceCharactersName_ThrowsArgumentException")]
     public void Constructor_InvalidDisplayName_ThrowsArgumentException(string? displayName)
     {
-        var action = () => new User(_validId, displayName, _validDate);
+        var action = () => new User(_validId, displayName!, _validDate);
         
         action.Should()
             .Throw<ArgumentException>("Пустое имя пользователя должно выкидывать ошибку")
@@ -88,7 +88,7 @@ public class UserTests
     {
         var user = new User(_validId, _validDisplayName, _validDate);
         
-        var action = () => user.Rename(newDisplayName);
+        var action = () => user.Rename(newDisplayName!);
         
         action.Should()
             .Throw<ArgumentException>("Невалидное имя при переименовании должно выкидывать ошибку")
@@ -99,11 +99,11 @@ public class UserTests
     [TestCase(null, TestName = "Rename_NullString_DontChangeOldName")]
     [TestCase(" ", TestName = "Rename_WhitespaceName_DontChangeOldName")]
     [TestCase("\t\n", TestName = "Rename_WhitespaceCharactersName_DontChangeOldName")]
-    public void Rename_EmptyDisplayName_DontChangeOldName(string? newDisplayName)
+    public void Rename_InvalidDisplayName_DontChangeOldName(string? newDisplayName)
     {
         var user = new User(_validId, _validDisplayName, _validDate);
         
-        var act = () => user.Rename(newDisplayName);
+        var act = () => user.Rename(newDisplayName!);
 
         act.Should().Throw<ArgumentException>();
         user.DisplayName.Should().Be(_validDisplayName, "Неудачное переименование не должно менять старое имя");

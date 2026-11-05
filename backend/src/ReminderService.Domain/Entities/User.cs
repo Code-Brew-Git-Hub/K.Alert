@@ -2,9 +2,9 @@ namespace ReminderService.Domain.Entities;
 
 public class User
 {
-    public Guid Id { get; set; }
-    public string DisplayName { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public Guid Id { get; private set; }
+    public string DisplayName { get; private set; }
+    public DateTime CreatedAt { get; private set; }
 
     public User(Guid id, string displayName, DateTime createdAt)
     {
