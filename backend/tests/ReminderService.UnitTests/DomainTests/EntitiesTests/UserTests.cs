@@ -8,112 +8,113 @@ public class UserTests
 {
     private static readonly Guid UserId = Guid.NewGuid();
     private const string DisplayName = "Oleg";
-    private static readonly DateTime JoinedAt =
+
+    private static readonly DateTime CreatedAt =
         new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     [Test]
-    public void Constructor_EmptyId_ThrowsArgumentException()
+    public void Constructor_WithValidArguments_CreatesUser()
     {
-        var id = Guid.Empty;
-        
-        var action = () => new User(id, DisplayName, JoinedAt);
-        
+        var user = new User(UserId, DisplayName, CreatedAt);
+
+        user.Id.Should().Be(UserId);
+        user.DisplayName.Should().Be(DisplayName);
+        user.CreatedAt.Should().Be(CreatedAt);
+        user.CreatedAt.Kind.Should().Be(DateTimeKind.Utc);
+    }
+
+    [Test]
+    public void Constructor_WithEmptyId_Throws()
+    {
+        Action action = () =>
+            new User(Guid.Empty, DisplayName, CreatedAt);
+
         action.Should()
-            .Throw<ArgumentException>("Пустой идентификатор пользователя должен выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("id");
     }
 
-    [TestCase("", TestName = "Constructor_EmptyStringName_ThrowsArgumentException")]
-    [TestCase(null, TestName = "Constructor_NullStringName_ThrowsArgumentException")]
-    [TestCase(" ", TestName = "Constructor_WhitespaceName_ThrowsArgumentException")]
-    [TestCase("\t\n", TestName = "Constructor_WhitespaceCharactersName_ThrowsArgumentException")]
-    public void Constructor_InvalidDisplayName_ThrowsArgumentException(string? displayName)
+    [TestCase(null, TestName = "Constructor_WithNullDisplayName_Throws")]
+    [TestCase("", TestName = "Constructor_WithEmptyDisplayName_Throws")]
+    [TestCase(" ", TestName = "Constructor_WithWhitespaceDisplayName_Throws")]
+    [TestCase("\t\n", TestName = "Constructor_WithWhitespaceCharactersDisplayName_Throws")]
+    public void Constructor_WithInvalidDisplayName_Throws(string? displayName)
     {
-        var action = () => new User(UserId, displayName!, JoinedAt);
-        
+        Action action = () =>
+            new User(UserId, displayName!, CreatedAt);
+
         action.Should()
-            .Throw<ArgumentException>("Пустое имя пользователя должно выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("displayName");
     }
 
-    [TestCase(DateTimeKind.Unspecified)]
     [TestCase(DateTimeKind.Local)]
-    public void Constructor_DateNotUtc_ThrowsArgumentException(DateTimeKind kind)
+    [TestCase(DateTimeKind.Unspecified)]
+    public void Constructor_WithNonUtcCreatedAt_Throws(DateTimeKind kind)
     {
-        var createdAt = new DateTime(2026, 1, 1, 0, 0, 0, kind);
-        
-        var action = () => new User(UserId, DisplayName, createdAt);
-        
+        var createdAt = DateTime.SpecifyKind(CreatedAt, kind);
+
+        Action action = () =>
+            new User(UserId, DisplayName, createdAt);
+
         action.Should()
-            .Throw<ArgumentException>("Дата не в формате UTC должна выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("createdAt");
     }
 
-    [TestCase("Oleg ", "Oleg",  TestName = "DisplayNameWithWhiteSpaceInRight_ReturnsWithoutWhiteSpace")]
-    [TestCase("Oleg  ", "Oleg", TestName = "DisplayNameWithTwoWhiteSpaceInRight_ReturnsWithoutWhiteSpace")]
-    [TestCase(" Oleg", "Oleg", TestName = "DisplayNameWithWhiteSpaceInLeft_ReturnsWithoutWhiteSpace")]
-    [TestCase("  Oleg", "Oleg", TestName = "DisplayNameWithTwoWhiteSpaceInLeft_ReturnsWithoutWhiteSpace")]
-    [TestCase(" Oleg ", "Oleg", TestName = "DisplayNameWithWhiteSpaceInRightAndLeft_ReturnsWithoutWhiteSpace")]
-    public void Constructor_ShouldTrimDisplayName(string displayName, string expectedDisplayName)
+    [TestCase("Oleg", "Oleg")]
+    [TestCase("Oleg ", "Oleg")]
+    [TestCase("Oleg  ", "Oleg")]
+    [TestCase(" Oleg", "Oleg")]
+    [TestCase("  Oleg", "Oleg")]
+    [TestCase(" Oleg ", "Oleg")]
+    [TestCase("\tOleg\n", "Oleg")]
+    [TestCase(" Oleg Petrov ", "Oleg Petrov")]
+    public void Constructor_WithValidDisplayName_TrimsEdges(
+        string displayName,
+        string expectedDisplayName)
     {
-        var user = new User(UserId, displayName, JoinedAt);
-        
-        user.DisplayName.Should()
-            .Be(expectedDisplayName, "Конструктор должен обрезать пробелы с начала и конца имени пользователя");
+        var user = new User(UserId, displayName, CreatedAt);
+
+        user.DisplayName.Should().Be(expectedDisplayName);
     }
-    
-    [Test]
-    public void Constructor_ValidArguments_CreatesUser()
+
+    [TestCase(null, TestName = "Rename_WithNullDisplayName_ThrowsAndPreservesName")]
+    [TestCase("", TestName = "Rename_WithEmptyDisplayName_ThrowsAndPreservesName")]
+    [TestCase(" ", TestName = "Rename_WithWhitespaceDisplayName_ThrowsAndPreservesName")]
+    [TestCase("\t\n", TestName = "Rename_WithWhitespaceCharactersDisplayName_ThrowsAndPreservesName")]
+    public void Rename_WithInvalidDisplayName_ThrowsAndPreservesName(
+        string? newDisplayName)
     {
-        var user = new User(UserId, DisplayName, JoinedAt);
-        
-        user.Id.Should().Be(UserId, $"Id пользователя должен совпадать с заданным: {UserId}");
-        user.DisplayName.Should().Be(DisplayName, $"DisplayName пользователя должно совпадать с заданным: {DisplayName}");
-        user.CreatedAt.Should().Be(JoinedAt, $"CreatedAt пользователя должен совпадать с заданным: {JoinedAt}");
-    }
-    
-    [TestCase("", TestName = "Rename_EmptyString_ThrowsArgumentException")]
-    [TestCase(null, TestName = "Rename_NullString_ThrowsArgumentException")]
-    [TestCase(" ", TestName = "Rename_WhitespaceName_ThrowsArgumentException")]
-    [TestCase("\t\n", TestName = "Rename_WhitespaceCharactersName_ThrowsArgumentException")]
-    public void Rename_InvalidDisplayName_ThrowsArgumentException(string? newDisplayName)
-    {
-        var user = new User(UserId, DisplayName, JoinedAt);
-        
-        var action = () => user.Rename(newDisplayName!);
-        
+        var user = new User(UserId, DisplayName, CreatedAt);
+
+        Action action = () =>
+            user.Rename(newDisplayName!);
+
         action.Should()
-            .Throw<ArgumentException>("Невалидное имя при переименовании должно выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("displayName");
+
+        user.DisplayName.Should().Be(DisplayName);
     }
 
-    [TestCase("", TestName = "Rename_EmptyString_DontChangeOldName")]
-    [TestCase(null, TestName = "Rename_NullString_DontChangeOldName")]
-    [TestCase(" ", TestName = "Rename_WhitespaceName_DontChangeOldName")]
-    [TestCase("\t\n", TestName = "Rename_WhitespaceCharactersName_DontChangeOldName")]
-    public void Rename_InvalidDisplayName_DontChangeOldName(string? newDisplayName)
-    {
-        var user = new User(UserId, DisplayName, JoinedAt);
-        
-        var act = () => user.Rename(newDisplayName!);
-
-        act.Should().Throw<ArgumentException>();
-        user.DisplayName.Should().Be(DisplayName, "Неудачное переименование не должно менять старое имя");
-    }
-    
     [TestCase("Ivan", "Ivan")]
     [TestCase(" Ivan ", "Ivan")]
     [TestCase("  Ivan", "Ivan")]
     [TestCase("Ivan  ", "Ivan")]
-    [TestCase("Ivan Petrov", "Ivan Petrov")]
-    public void Rename_ValidDisplayName_UpdatesName(string newDisplayName, string expectedDisplayName)
+    [TestCase("\tIvan\n", "Ivan")]
+    [TestCase(" Ivan Petrov ", "Ivan Petrov")]
+    [TestCase(DisplayName, DisplayName)]
+    public void Rename_WithValidDisplayName_UpdatesOnlyName(
+        string newDisplayName,
+        string expectedDisplayName)
     {
-        var user = new User(UserId, DisplayName, JoinedAt);
+        var user = new User(UserId, DisplayName, CreatedAt);
 
         user.Rename(newDisplayName);
 
         user.DisplayName.Should().Be(expectedDisplayName);
         user.Id.Should().Be(UserId);
-        user.CreatedAt.Should().Be(JoinedAt);
+        user.CreatedAt.Should().Be(CreatedAt);
     }
 }

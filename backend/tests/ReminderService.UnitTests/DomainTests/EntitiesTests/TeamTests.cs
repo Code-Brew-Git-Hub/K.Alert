@@ -7,113 +7,114 @@ namespace ReminderService.UnitTests.DomainTests.EntitiesTests;
 public class TeamTests
 {
     private static readonly Guid TeamId = Guid.NewGuid();
-    private const string Name = "Oleg";
-    private static readonly DateTime JoinedAt =
+    private const string Name = "Backend-1";
+
+    private static readonly DateTime CreatedAt =
         new(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
-    
+
     [Test]
-    public void Constructor_EmptyId_ThrowsArgumentException()
+    public void Constructor_WithValidArguments_CreatesTeam()
     {
-        var id = Guid.Empty;
-        
-        var action = () => new Team(id, Name, JoinedAt);
-        
+        var team = new Team(TeamId, Name, CreatedAt);
+
+        team.Id.Should().Be(TeamId);
+        team.Name.Should().Be(Name);
+        team.CreatedAt.Should().Be(CreatedAt);
+        team.CreatedAt.Kind.Should().Be(DateTimeKind.Utc);
+    }
+
+    [Test]
+    public void Constructor_WithEmptyId_Throws()
+    {
+        Action action = () =>
+            new Team(Guid.Empty, Name, CreatedAt);
+
         action.Should()
-            .Throw<ArgumentException>("Пустой идентификатор команды должен выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("id");
     }
 
-    [TestCase("", TestName = "Constructor_EmptyStringName_ThrowsArgumentException")]
-    [TestCase(null, TestName = "Constructor_NullStringName_ThrowsArgumentException")]
-    [TestCase(" ", TestName = "Constructor_WhitespaceName_ThrowsArgumentException")]
-    [TestCase("\t\n", TestName = "Constructor_WhitespaceCharactersName_ThrowsArgumentException")]
-    public void Constructor_InvalidName_ThrowsArgumentException(string? name)
+    [TestCase(null, TestName = "Constructor_WithNullName_Throws")]
+    [TestCase("", TestName = "Constructor_WithEmptyName_Throws")]
+    [TestCase(" ", TestName = "Constructor_WithWhitespaceName_Throws")]
+    [TestCase("\t\n", TestName = "Constructor_WithWhitespaceCharactersName_Throws")]
+    public void Constructor_WithInvalidName_Throws(string? name)
     {
-        var action = () => new Team(TeamId, name!, JoinedAt);
-        
+        Action action = () =>
+            new Team(TeamId, name!, CreatedAt);
+
         action.Should()
-            .Throw<ArgumentException>("некорректное название команды должно выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("name");
     }
 
-    [TestCase(DateTimeKind.Unspecified)]
     [TestCase(DateTimeKind.Local)]
-    public void Constructor_DateNotUtc_ThrowsArgumentException(DateTimeKind kind)
+    [TestCase(DateTimeKind.Unspecified)]
+    public void Constructor_WithNonUtcCreatedAt_Throws(DateTimeKind kind)
     {
-        var createdAt = new DateTime(2026, 1, 1, 0, 0, 0, kind);
-        
-        var action = () => new Team(TeamId, Name, createdAt);
-        
+        var createdAt = DateTime.SpecifyKind(CreatedAt, kind);
+
+        Action action = () =>
+            new Team(TeamId, Name, createdAt);
+
         action.Should()
-            .Throw<ArgumentException>("Дата не в формате UTC должна выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("createdAt");
     }
 
-    [TestCase("Backend-1 ", "Backend-1",  TestName = "NameWithWhiteSpaceInRight_ReturnsWithoutWhiteSpace")]
-    [TestCase("Backend-1  ", "Backend-1", TestName = "NameWithTwoWhiteSpaceInRight_ReturnsWithoutWhiteSpace")]
-    [TestCase(" Backend-1", "Backend-1", TestName = "NameWithWhiteSpaceInLeft_ReturnsWithoutWhiteSpace")]
-    [TestCase("  Backend-1", "Backend-1", TestName = "NameWithTwoWhiteSpaceInLeft_ReturnsWithoutWhiteSpace")]
-    [TestCase(" Backend-1 ", "Backend-1", TestName = "NameWithWhiteSpaceInRightAndLeft_ReturnsWithoutWhiteSpace")]
-    public void Constructor_ShouldTrimName(string name, string expectedName)
+    [TestCase("Backend-1", "Backend-1")]
+    [TestCase("Backend-1 ", "Backend-1")]
+    [TestCase("Backend-1  ", "Backend-1")]
+    [TestCase(" Backend-1", "Backend-1")]
+    [TestCase("  Backend-1", "Backend-1")]
+    [TestCase(" Backend-1 ", "Backend-1")]
+    [TestCase("\tBackend-1\n", "Backend-1")]
+    [TestCase(" Backend 1 ", "Backend 1")]
+    public void Constructor_WithValidName_TrimsEdges(
+        string name,
+        string expectedName)
     {
-        var team = new Team(TeamId, name, JoinedAt);
-        
-        team.Name.Should()
-            .Be(expectedName, "Конструктор должен обрезать пробелы с начала и конца имени команды");
+        var team = new Team(TeamId, name, CreatedAt);
+
+        team.Name.Should().Be(expectedName);
     }
-    
-    [Test]
-    public void Constructor_ValidArguments_CreatesTeam()
+
+    [TestCase(null, TestName = "Rename_WithNullName_ThrowsAndPreservesName")]
+    [TestCase("", TestName = "Rename_WithEmptyName_ThrowsAndPreservesName")]
+    [TestCase(" ", TestName = "Rename_WithWhitespaceName_ThrowsAndPreservesName")]
+    [TestCase("\t\n", TestName = "Rename_WithWhitespaceCharactersName_ThrowsAndPreservesName")]
+    public void Rename_WithInvalidName_ThrowsAndPreservesName(
+        string? newName)
     {
-        var team = new Team(TeamId, Name, JoinedAt);
-        
-        team.Id.Should().Be(TeamId, $"Id команды должен совпадать с заданным: {TeamId}");
-        team.Name.Should().Be(Name, $"Name команды должно совпадать с заданным: {Name}");
-        team.CreatedAt.Should().Be(JoinedAt, $"CreatedAt команды должен совпадать с заданным: {JoinedAt}");
-    }
-    
-    [TestCase("", TestName = "Rename_EmptyString_ThrowsArgumentException")]
-    [TestCase(null, TestName = "Rename_NullString_ThrowsArgumentException")]
-    [TestCase(" ", TestName = "Rename_WhitespaceName_ThrowsArgumentException")]
-    [TestCase("\t\n", TestName = "Rename_WhitespaceCharactersName_ThrowsArgumentException")]
-    public void Rename_InvalidName_ThrowsArgumentException(string? newName)
-    {
-        var team = new Team(TeamId, Name, JoinedAt);
-        
-        var action = () => team.Rename(newName!);
-        
+        var team = new Team(TeamId, Name, CreatedAt);
+
+        Action action = () =>
+            team.Rename(newName!);
+
         action.Should()
-            .Throw<ArgumentException>("некорректное имя при переименовании должно выкидывать ошибку")
+            .Throw<ArgumentException>()
             .WithParameterName("name");
+
+        team.Name.Should().Be(Name);
     }
 
-    [TestCase("", TestName = "Rename_EmptyString_DontChangeOldName")]
-    [TestCase(null, TestName = "Rename_NullString_DontChangeOldName")]
-    [TestCase(" ", TestName = "Rename_WhitespaceName_DontChangeOldName")]
-    [TestCase("\t\n", TestName = "Rename_WhitespaceCharactersName_DontChangeOldName")]
-    public void Rename_InvalidName_DontChangeOldName(string? newName)
-    {
-        var team = new Team(TeamId, Name, JoinedAt);
-        
-        var act = () => team.Rename(newName!);
-
-        act.Should().Throw<ArgumentException>();
-        team.Name.Should().Be(Name, "Неудачное переименование не должно менять старое имя");
-    }
-    
     [TestCase("Backend-2", "Backend-2")]
     [TestCase(" Backend-2 ", "Backend-2")]
     [TestCase("  Backend-2", "Backend-2")]
     [TestCase("Backend-2  ", "Backend-2")]
-    [TestCase("Backend 2", "Backend 2")]
-    public void Rename_ValidName_UpdatesName(string newName, string expectedName)
+    [TestCase("\tBackend-2\n", "Backend-2")]
+    [TestCase(" Backend 2 ", "Backend 2")]
+    [TestCase(Name, Name)]
+    public void Rename_WithValidName_UpdatesOnlyName(
+        string newName,
+        string expectedName)
     {
-        var team = new Team(TeamId, Name, JoinedAt);
+        var team = new Team(TeamId, Name, CreatedAt);
 
         team.Rename(newName);
 
         team.Name.Should().Be(expectedName);
         team.Id.Should().Be(TeamId);
-        team.CreatedAt.Should().Be(JoinedAt);
+        team.CreatedAt.Should().Be(CreatedAt);
     }
 }
