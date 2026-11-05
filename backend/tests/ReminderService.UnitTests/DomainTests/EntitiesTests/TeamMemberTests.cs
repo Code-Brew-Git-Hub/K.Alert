@@ -102,7 +102,7 @@ public class TeamMemberTests
         var member = new TeamMember(
             TeamId, UserId, initialRole, JoinedAt);
 
-        Action action = () =>
+        var action = () =>
             member.ChangeRole((TeamRole)roleValue);
 
         action.Should()

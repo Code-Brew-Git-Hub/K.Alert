@@ -88,7 +88,7 @@ public class UserTests
     {
         var user = new User(UserId, DisplayName, CreatedAt);
 
-        Action action = () =>
+        var action = () =>
             user.Rename(newDisplayName!);
 
         action.Should()

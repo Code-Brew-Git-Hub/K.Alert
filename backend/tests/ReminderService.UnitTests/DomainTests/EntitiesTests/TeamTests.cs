@@ -88,7 +88,7 @@ public class TeamTests
     {
         var team = new Team(TeamId, Name, CreatedAt);
 
-        Action action = () =>
+        var action = () =>
             team.Rename(newName!);
 
         action.Should()

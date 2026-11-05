@@ -2,10 +2,6 @@ namespace ReminderService.Domain.Entities;
 
 public class Team
 {
-    public Guid Id { get; private set; }
-    public string Name { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    
     public Team(Guid id, string name, DateTime createdAt)
     {
         if (id == Guid.Empty)
@@ -24,6 +20,10 @@ public class Team
         Name = name.Trim();
         CreatedAt = createdAt;
     }
+
+    public Guid Id { get; private set; }
+    public string Name { get; private set; }
+    public DateTime CreatedAt { get; private set; }
 
     public void Rename(string name)
     {

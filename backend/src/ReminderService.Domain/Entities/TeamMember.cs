@@ -4,11 +4,6 @@ namespace ReminderService.Domain.Entities;
 
 public class TeamMember
 {
-    public Guid TeamId { get; private set; }
-    public Guid UserId { get; private set; }
-    public TeamRole Role { get; private set; }
-    public DateTime JoinedAt { get; private set; }
-    
     public TeamMember(
         Guid teamId,
         Guid userId,
@@ -37,6 +32,11 @@ public class TeamMember
         Role = role;
         JoinedAt = joinedAt;
     }
+
+    public Guid TeamId { get; private set; }
+    public Guid UserId { get; private set; }
+    public TeamRole Role { get; private set; }
+    public DateTime JoinedAt { get; private set; }
 
     public void ChangeRole(TeamRole role)
     {

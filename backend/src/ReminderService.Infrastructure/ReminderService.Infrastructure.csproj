@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ReminderService.Application\ReminderService.Application.csproj" />
-      <ProjectReference Include="..\ReminderService.Domain\ReminderService.Domain.csproj" />
+        <ProjectReference Include="..\ReminderService.Application\ReminderService.Application.csproj"/>
+        <ProjectReference Include="..\ReminderService.Domain\ReminderService.Domain.csproj"/>
     </ItemGroup>
 
 </Project>
