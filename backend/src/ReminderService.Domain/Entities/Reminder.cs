@@ -1,3 +1,4 @@
+using ReminderService.Domain.Scheduling;
 using ReminderService.Domain.Enums;
 
 namespace ReminderService.Domain.Entities;
@@ -35,7 +36,7 @@ public class Reminder
                 nameof(createdByUserId));
 
         ValidateContent(title, text);
-        ValidateSchedule(
+        ReminderSchedule.Validate(
             startLocalDate,
             timeZoneId,
             repeatUnit,
@@ -113,7 +114,7 @@ public class Reminder
     {
         EnsureScheduleEditable();
 
-        ValidateSchedule(
+        ReminderSchedule.Validate(
             startLocalDate,
             timeZoneId,
             repeatUnit,
@@ -182,9 +183,7 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void AdvanceSchedule(
-        DateTime? nextOccurrenceAt,
-        DateTime updatedAt)
+    public void AdvanceSchedule(DateTime? nextOccurrenceAt, DateTime updatedAt)
     {
         if (Status != ReminderStatus.Active)
             throw new InvalidOperationException(
@@ -192,7 +191,9 @@ public class Reminder
 
         ValidateChangeTime(updatedAt);
 
-        if (updatedAt < NextOccurrenceAt!.Value)
+        var currentOccurrenceAt = NextOccurrenceAt!.Value;
+
+        if (updatedAt < currentOccurrenceAt)
             throw new InvalidOperationException(
                 "Время текущего срабатывания ещё не наступило.");
 
@@ -200,14 +201,28 @@ public class Reminder
         {
             ValidateUtc(nextOccurrenceAt.Value, nameof(nextOccurrenceAt));
 
-            if (nextOccurrenceAt.Value <= NextOccurrenceAt!.Value)
+            if (nextOccurrenceAt.Value <= currentOccurrenceAt)
                 throw new ArgumentException(
                     "Следующее срабатывание должно быть позже текущего.",
                     nameof(nextOccurrenceAt));
 
             if (RepeatUnit == RepeatUnit.None)
-                throw new InvalidOperationException(
-                    "У разового напоминания нет следующего срабатывания.");
+            {
+                var schedule = new ReminderSchedule(
+                    StartLocalDate,
+                    LocalTime,
+                    TimeZoneId,
+                    RepeatUnit,
+                    RepeatInterval,
+                    EndLocalDate);
+
+                if (ScheduleCalculator.FindOnOrAfter(schedule, currentOccurrenceAt) != currentOccurrenceAt
+                    || ScheduleCalculator.FindAfter(schedule, currentOccurrenceAt) != nextOccurrenceAt)
+                {
+                    throw new InvalidOperationException(
+                        "Следующее срабатывание разового напоминания допустимо только при повторе местного времени.");
+                }
+            }
         }
 
         NextOccurrenceAt = nextOccurrenceAt;
@@ -273,44 +288,6 @@ public class Reminder
             throw new ArgumentException(
                 "Текст напоминания не должен быть пустым.",
                 nameof(text));
-    }
-
-    private static void ValidateSchedule(
-        DateOnly startLocalDate,
-        string timeZoneId,
-        RepeatUnit repeatUnit,
-        int? repeatInterval,
-        DateOnly? endLocalDate)
-    {
-        if (string.IsNullOrWhiteSpace(timeZoneId))
-            throw new ArgumentException(
-                "Часовой пояс не должен быть пустым.",
-                nameof(timeZoneId));
-
-        if (!Enum.IsDefined(repeatUnit))
-            throw new ArgumentOutOfRangeException(
-                nameof(repeatUnit),
-                repeatUnit,
-                "Указана неизвестная единица повторения.");
-
-        if (repeatUnit == RepeatUnit.None)
-        {
-            if (repeatInterval.HasValue)
-                throw new ArgumentException(
-                    "Для разового напоминания интервал должен отсутствовать.",
-                    nameof(repeatInterval));
-        }
-        else if (!repeatInterval.HasValue || repeatInterval.Value < 1)
-        {
-            throw new ArgumentException(
-                "Интервал повторения должен быть не меньше единицы.",
-                nameof(repeatInterval));
-        }
-
-        if (endLocalDate.HasValue && endLocalDate.Value < startLocalDate)
-            throw new ArgumentException(
-                "Дата окончания не может быть раньше даты начала.",
-                nameof(endLocalDate));
     }
 
     private static void ValidateUtc(DateTime value, string parameterName)

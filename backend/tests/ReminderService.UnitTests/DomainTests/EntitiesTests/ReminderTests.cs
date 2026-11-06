@@ -466,6 +466,39 @@ public class ReminderTests
 
         Snapshot(reminder).Should().BeEquivalentTo(before);
     }
+    
+    [Test]
+    public void AdvanceSchedule_OneTimeAtFallBack_AcceptsSecondOccurrenceThenCompletes()
+    {
+        var first = new DateTime(2026, 11, 1, 5, 30, 0, DateTimeKind.Utc);
+        var second = first.AddHours(1);
+        var reminder = new Reminder(
+            ReminderId,
+            TeamId,
+            "Название",
+            "Текст",
+            new DateOnly(2026, 11, 1),
+            new TimeOnly(1, 30),
+            "America/New_York",
+            RepeatUnit.None,
+            null,
+            null,
+            first,
+            AuthorId,
+            first.AddDays(-1));
+
+        reminder.AdvanceSchedule(second, first);
+
+        reminder.Status.Should().Be(ReminderStatus.Active);
+        reminder.NextOccurrenceAt.Should().Be(second);
+        reminder.Version.Should().Be(2);
+
+        reminder.AdvanceSchedule(null, second);
+
+        reminder.Status.Should().Be(ReminderStatus.Completed);
+        reminder.NextOccurrenceAt.Should().BeNull();
+        reminder.Version.Should().Be(3);
+    }
 
     [TestCase(ReminderStatus.Active)]
     [TestCase(ReminderStatus.Paused)]
@@ -609,7 +642,7 @@ public class ReminderTests
         var nextOccurrenceAt = DateTime.SpecifyKind(
             FirstOccurrenceAt.AddDays(1),
             kind);
-        var updatedAt = CreatedAt.AddMinutes(2);
+        var updatedAt = reminder.UpdatedAt.AddMinutes(1);
 
         var action = () =>
         {
@@ -715,10 +748,14 @@ public class ReminderTests
 
         // Предыдущее изменение нужно для проверки относительно UpdatedAt,
         // а не только относительно CreatedAt.
+        var previousChangeAt = operation == "AdvanceSchedule"
+            ? FirstOccurrenceAt
+            : CreatedAt.AddMinutes(1);
+
         reminder.UpdateContent(
             reminder.Title,
             reminder.Text,
-            CreatedAt.AddMinutes(1));
+            previousChangeAt);
 
         if (operation == "Resume")
             reminder.Pause(CreatedAt.AddMinutes(1));
