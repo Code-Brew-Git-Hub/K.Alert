@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReminderService.Domain", "src\ReminderService.Domain\ReminderService.Domain.csproj", "{C9E1920C-E63A-4DB3-BA1F-6BF8C41864F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReminderService.Application", "src\ReminderService.Application\ReminderService.Application.csproj", "{DE169C3F-5CEF-4229-80FF-F5F1E2F77929}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReminderService.Infrastructure", "src\ReminderService.Infrastructure\ReminderService.Infrastructure.csproj", "{3B1045E3-A39C-47D8-91E0-AA3591B1205F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReminderService.Contracts", "src\ReminderService.Contracts\ReminderService.Contracts.csproj", "{26E7EE25-758B-4899-A748-2898BCEC3C53}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReminderService.Api", "src\ReminderService.Api\ReminderService.Api.csproj", "{593B929C-E09E-4967-AF27-BFA6B8854B66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReminderService.DeliveryWorker", "src\ReminderService.DeliveryWorker\ReminderService.DeliveryWorker.csproj", "{66982683-0ECD-4067-B322-DD3584FC15CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReminderService.UnitTests", "tests\ReminderService.UnitTests\ReminderService.UnitTests.csproj", "{6C9AC03D-5E6C-4C25-A1EC-0A249DC94AF0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9E1920C-E63A-4DB3-BA1F-6BF8C41864F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9E1920C-E63A-4DB3-BA1F-6BF8C41864F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9E1920C-E63A-4DB3-BA1F-6BF8C41864F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9E1920C-E63A-4DB3-BA1F-6BF8C41864F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE169C3F-5CEF-4229-80FF-F5F1E2F77929}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE169C3F-5CEF-4229-80FF-F5F1E2F77929}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE169C3F-5CEF-4229-80FF-F5F1E2F77929}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE169C3F-5CEF-4229-80FF-F5F1E2F77929}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B1045E3-A39C-47D8-91E0-AA3591B1205F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B1045E3-A39C-47D8-91E0-AA3591B1205F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B1045E3-A39C-47D8-91E0-AA3591B1205F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B1045E3-A39C-47D8-91E0-AA3591B1205F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26E7EE25-758B-4899-A748-2898BCEC3C53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26E7EE25-758B-4899-A748-2898BCEC3C53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26E7EE25-758B-4899-A748-2898BCEC3C53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26E7EE25-758B-4899-A748-2898BCEC3C53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{593B929C-E09E-4967-AF27-BFA6B8854B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{593B929C-E09E-4967-AF27-BFA6B8854B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{593B929C-E09E-4967-AF27-BFA6B8854B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{593B929C-E09E-4967-AF27-BFA6B8854B66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66982683-0ECD-4067-B322-DD3584FC15CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66982683-0ECD-4067-B322-DD3584FC15CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66982683-0ECD-4067-B322-DD3584FC15CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66982683-0ECD-4067-B322-DD3584FC15CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C9AC03D-5E6C-4C25-A1EC-0A249DC94AF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C9AC03D-5E6C-4C25-A1EC-0A249DC94AF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C9AC03D-5E6C-4C25-A1EC-0A249DC94AF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C9AC03D-5E6C-4C25-A1EC-0A249DC94AF0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
