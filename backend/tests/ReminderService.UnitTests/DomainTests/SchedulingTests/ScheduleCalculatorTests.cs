@@ -152,6 +152,46 @@ public class ScheduleCalculatorTests
         ScheduleCalculator.FindOnOrAfter(schedule, Utc(2011, 12, 30, 12))
             .Should().Be(Utc(2011, 12, 31, 0));
     }
+    
+    [Test]
+    public void SkippedLocalDay_ReturnsEachDistinctUtcInstantOnce()
+    {
+        var schedule = new ReminderSchedule(
+            new DateOnly(2011, 12, 30),
+            new TimeOnly(14, 0),
+            "Pacific/Apia",
+            RepeatUnit.Day,
+            1,
+            new DateOnly(2011, 12, 31));
+
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(schedule.TimeZoneId);
+        var firstUtc = Utc(2011, 12, 31, 0);
+        var firstLocal = TimeZoneInfo.ConvertTimeFromUtc(firstUtc, zone);
+
+        ScheduleCalculator.FindOnOrAfter(schedule, Utc(2011, 12, 30, 12))
+            .Should().Be(firstUtc);
+
+        var next = ScheduleCalculator.FindAfter(schedule, firstUtc);
+
+        switch (firstLocal)
+        {
+            case var local when local == new DateTime(2011, 12, 31, 14, 0, 0):
+                // Пропущено 30 декабря. Обе даты дают один UTC-момент.
+                next.Should().BeNull();
+                break;
+
+            case var local when local == new DateTime(2011, 12, 30, 14, 0, 0):
+                // Пропущено 31 декабря. Сдвинутое срабатывание даёт второй момент.
+                var secondUtc = Utc(2012, 1, 1, 0);
+                next.Should().Be(secondUtc);
+                ScheduleCalculator.FindAfter(schedule, secondUtc).Should().BeNull();
+                break;
+
+            default:
+                Assert.Fail($"Неожиданное локальное время для Pacific/Apia: {firstLocal:O}");
+                break;
+        }
+    }
 
     [TestCase(DateTimeKind.Local)]
     [TestCase(DateTimeKind.Unspecified)]
