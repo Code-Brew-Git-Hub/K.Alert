@@ -169,6 +169,8 @@ public class ScheduleCalculatorTests
         exclusive.Should().Throw<ArgumentException>().WithParameterName("afterUtc");
     }
 
-    private static DateTime Utc(int year, int month, int day, int hour, int minute = 0) =>
-        new(year, month, day, hour, minute, 0, DateTimeKind.Utc);
+    private static DateTime Utc(int year, int month, int day, int hour, int minute = 0)
+    {
+        return new DateTime(year, month, day, hour, minute, 0, DateTimeKind.Utc);
+    }
 }

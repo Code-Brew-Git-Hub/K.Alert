@@ -10,7 +10,7 @@ public sealed record ReminderSchedule(
     int? RepeatInterval,
     DateOnly? EndLocalDate)
 {
-    internal static void Validate(
+    internal static TimeZoneInfo Validate(
         DateOnly startLocalDate,
         string timeZoneId,
         RepeatUnit repeatUnit,
@@ -20,6 +20,11 @@ public sealed record ReminderSchedule(
         if (string.IsNullOrWhiteSpace(timeZoneId))
             throw new ArgumentException(
                 "Часовой пояс не должен быть пустым.",
+                nameof(timeZoneId));
+
+        if (!TimeZoneInfo.TryFindSystemTimeZoneById(timeZoneId, out var timeZone))
+            throw new ArgumentException(
+                "Указан неизвестный или недоступный часовой пояс.",
                 nameof(timeZoneId));
 
         if (!Enum.IsDefined(repeatUnit))
@@ -46,5 +51,7 @@ public sealed record ReminderSchedule(
             throw new ArgumentException(
                 "Дата окончания не может быть раньше даты начала.",
                 nameof(endLocalDate));
+
+        return timeZone;
     }
 }

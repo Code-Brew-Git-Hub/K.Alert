@@ -1,5 +1,5 @@
-using ReminderService.Domain.Scheduling;
 using ReminderService.Domain.Enums;
+using ReminderService.Domain.Scheduling;
 
 namespace ReminderService.Domain.Entities;
 
@@ -183,7 +183,7 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void AdvanceSchedule(DateTime? nextOccurrenceAt, DateTime updatedAt)
+    public void AdvanceSchedule(DateTime updatedAt)
     {
         if (Status != ReminderStatus.Active)
             throw new InvalidOperationException(
@@ -192,42 +192,21 @@ public class Reminder
         ValidateChangeTime(updatedAt);
 
         var currentOccurrenceAt = NextOccurrenceAt!.Value;
-
         if (updatedAt < currentOccurrenceAt)
             throw new InvalidOperationException(
                 "Время текущего срабатывания ещё не наступило.");
 
-        if (nextOccurrenceAt.HasValue)
-        {
-            ValidateUtc(nextOccurrenceAt.Value, nameof(nextOccurrenceAt));
+        var schedule = new ReminderSchedule(
+            StartLocalDate,
+            LocalTime,
+            TimeZoneId,
+            RepeatUnit,
+            RepeatInterval,
+            EndLocalDate);
 
-            if (nextOccurrenceAt.Value <= currentOccurrenceAt)
-                throw new ArgumentException(
-                    "Следующее срабатывание должно быть позже текущего.",
-                    nameof(nextOccurrenceAt));
+        NextOccurrenceAt = ScheduleCalculator.FindAfter(schedule, currentOccurrenceAt);
 
-            if (RepeatUnit == RepeatUnit.None)
-            {
-                var schedule = new ReminderSchedule(
-                    StartLocalDate,
-                    LocalTime,
-                    TimeZoneId,
-                    RepeatUnit,
-                    RepeatInterval,
-                    EndLocalDate);
-
-                if (ScheduleCalculator.FindOnOrAfter(schedule, currentOccurrenceAt) != currentOccurrenceAt
-                    || ScheduleCalculator.FindAfter(schedule, currentOccurrenceAt) != nextOccurrenceAt)
-                {
-                    throw new InvalidOperationException(
-                        "Следующее срабатывание разового напоминания допустимо только при повторе местного времени.");
-                }
-            }
-        }
-
-        NextOccurrenceAt = nextOccurrenceAt;
-
-        if (!nextOccurrenceAt.HasValue)
+        if (!NextOccurrenceAt.HasValue)
             Status = ReminderStatus.Completed;
 
         Touch(updatedAt);

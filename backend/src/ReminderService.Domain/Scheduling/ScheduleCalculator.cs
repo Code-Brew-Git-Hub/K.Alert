@@ -9,7 +9,7 @@ public static class ScheduleCalculator
         DateTime fromUtc)
     {
         ValidateUtc(fromUtc, nameof(fromUtc));
-        return Find(schedule, fromUtc, includeBoundary: true);
+        return Find(schedule, fromUtc, true);
     }
 
     public static DateTime? FindAfter(
@@ -17,7 +17,7 @@ public static class ScheduleCalculator
         DateTime afterUtc)
     {
         ValidateUtc(afterUtc, nameof(afterUtc));
-        return Find(schedule, afterUtc, includeBoundary: false);
+        return Find(schedule, afterUtc, false);
     }
 
     private static DateTime? Find(
@@ -27,14 +27,13 @@ public static class ScheduleCalculator
     {
         ArgumentNullException.ThrowIfNull(schedule);
 
-        ReminderSchedule.Validate(
+        var zone = ReminderSchedule.Validate(
             schedule.StartLocalDate,
             schedule.TimeZoneId,
             schedule.RepeatUnit,
             schedule.RepeatInterval,
             schedule.EndLocalDate);
 
-        var zone = TimeZoneInfo.FindSystemTimeZoneById(schedule.TimeZoneId);
         var start = schedule.StartLocalDate;
         var end = schedule.EndLocalDate ?? DateOnly.MaxValue;
         var utcDay = DateOnly.FromDateTime(boundaryUtc).DayNumber;
@@ -62,7 +61,7 @@ public static class ScheduleCalculator
             var date = GetDate(start, schedule.RepeatUnit, (int)(index * interval));
 
             if (date > end || (best.HasValue
-                && date.DayNumber > DateOnly.FromDateTime(best.Value).DayNumber + 1))
+                               && date.DayNumber > DateOnly.FromDateTime(best.Value).DayNumber + 1))
                 break;
 
             var localTime = date.ToDateTime(schedule.LocalTime);
@@ -80,23 +79,27 @@ public static class ScheduleCalculator
         return best;
     }
 
-    private static int Distance(DateOnly start, DateOnly end, RepeatUnit unit) =>
-        unit switch
+    private static int Distance(DateOnly start, DateOnly end, RepeatUnit unit)
+    {
+        return unit switch
         {
             RepeatUnit.Day or RepeatUnit.Week => end.DayNumber - start.DayNumber,
             RepeatUnit.Month => (end.Year - start.Year) * 12 + end.Month - start.Month,
             RepeatUnit.Year => end.Year - start.Year,
             _ => 0
         };
+    }
 
-    private static DateOnly GetDate(DateOnly start, RepeatUnit unit, int distance) =>
-        unit switch
+    private static DateOnly GetDate(DateOnly start, RepeatUnit unit, int distance)
+    {
+        return unit switch
         {
             RepeatUnit.Day or RepeatUnit.Week => start.AddDays(distance),
             RepeatUnit.Month => start.AddMonths(distance),
             RepeatUnit.Year => start.AddYears(distance),
             _ => start
         };
+    }
 
     private static HashSet<TimeSpan> GetOffsets(TimeZoneInfo zone)
     {
@@ -143,9 +146,7 @@ public static class ScheduleCalculator
                 if (beforeTransition.HasValue
                     && zone.GetUtcOffset(beforeTransition.Value) == offset
                     && (!shifted.HasValue || candidate.Value < shifted.Value))
-                {
                     shifted = candidate;
-                }
             }
         }
 

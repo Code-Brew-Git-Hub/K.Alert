@@ -99,6 +99,7 @@ public class ReminderTests
     [TestCase(null, TestName = "Constructor_NullTimeZoneId_Throws")]
     [TestCase("", TestName = "Constructor_EmptyTimeZoneId_Throws")]
     [TestCase("   ", TestName = "Constructor_WhitespaceTimeZoneId_Throws")]
+    [TestCase("Invalid/TimeZone", TestName = "Constructor_UnknownTimeZoneId_Throws")]
     public void Constructor_InvalidTimeZoneId_Throws(string? timeZoneId)
     {
         Action action = () => Create(timeZoneId: timeZoneId!);
@@ -404,13 +405,13 @@ public class ReminderTests
     }
 
     [Test]
-    public void AdvanceSchedule_RepeatingReminder_UpdatesNextOccurrence()
+    public void AdvanceSchedule_OverdueReminder_KeepsNextMissedOccurrence()
     {
         var reminder = CreateRepeating();
         var nextOccurrenceAt = FirstOccurrenceAt.AddDays(1);
-        var updatedAt = FirstOccurrenceAt;
+        var updatedAt = FirstOccurrenceAt.AddDays(3);
 
-        reminder.AdvanceSchedule(nextOccurrenceAt, updatedAt);
+        reminder.AdvanceSchedule(updatedAt);
 
         reminder.Status.Should().Be(ReminderStatus.Active);
         reminder.NextOccurrenceAt.Should().Be(nextOccurrenceAt);
@@ -423,9 +424,9 @@ public class ReminderTests
     public void AdvanceSchedule_WithoutNextOccurrence_CompletesReminder(
         bool repeating)
     {
-        var reminder = repeating ? CreateRepeating() : Create();
+        var reminder = repeating ? CreateRepeating(StartDate) : Create();
 
-        reminder.AdvanceSchedule(null, FirstOccurrenceAt);
+        reminder.AdvanceSchedule(FirstOccurrenceAt);
 
         reminder.Status.Should().Be(ReminderStatus.Completed);
         reminder.NextOccurrenceAt.Should().BeNull();
@@ -433,40 +434,33 @@ public class ReminderTests
         reminder.Version.Should().Be(2);
     }
 
-    [TestCase(-1)]
-    [TestCase(0)]
-    public void AdvanceSchedule_NextOccurrenceNotLater_DoesNotChangeState(
-        int seconds)
+    [Test]
+    public void AdvanceSchedule_BeforeCurrentOccurrence_DoesNotChangeState()
     {
         var reminder = CreateRepeating();
         var before = Snapshot(reminder);
 
-        var action = () => reminder.AdvanceSchedule(
-            FirstOccurrenceAt.AddSeconds(seconds),
-            FirstOccurrenceAt);
+        var action = () => reminder.AdvanceSchedule(FirstOccurrenceAt.AddTicks(-1));
 
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("nextOccurrenceAt");
-
+        action.Should().Throw<InvalidOperationException>();
         Snapshot(reminder).Should().BeEquivalentTo(before);
     }
 
     [Test]
-    public void AdvanceSchedule_OneTimeWithNextOccurrence_DoesNotChangeState()
+    public void ChangeSchedule_PausedReminderWithUnknownTimeZone_DoesNotChangeState()
     {
         var reminder = Create();
+        reminder.Pause(CreatedAt);
         var before = Snapshot(reminder);
 
-        var action = () => reminder.AdvanceSchedule(
-            FirstOccurrenceAt.AddDays(1),
-            FirstOccurrenceAt);
+        var action = () => reminder.ChangeSchedule(
+            StartDate, LocalTime, "Invalid/TimeZone", RepeatUnit.None,
+            null, null, null, CreatedAt);
 
-        action.Should().Throw<InvalidOperationException>();
-
+        action.Should().Throw<ArgumentException>().WithParameterName("timeZoneId");
         Snapshot(reminder).Should().BeEquivalentTo(before);
     }
-    
+
     [Test]
     public void AdvanceSchedule_OneTimeAtFallBack_AcceptsSecondOccurrenceThenCompletes()
     {
@@ -487,13 +481,13 @@ public class ReminderTests
             AuthorId,
             first.AddDays(-1));
 
-        reminder.AdvanceSchedule(second, first);
+        reminder.AdvanceSchedule(first);
 
         reminder.Status.Should().Be(ReminderStatus.Active);
         reminder.NextOccurrenceAt.Should().Be(second);
         reminder.Version.Should().Be(2);
 
-        reminder.AdvanceSchedule(null, second);
+        reminder.AdvanceSchedule(second);
 
         reminder.Status.Should().Be(ReminderStatus.Completed);
         reminder.NextOccurrenceAt.Should().BeNull();
@@ -631,8 +625,6 @@ public class ReminderTests
     [TestCase("ChangeSchedule", DateTimeKind.Unspecified)]
     [TestCase("Resume", DateTimeKind.Local)]
     [TestCase("Resume", DateTimeKind.Unspecified)]
-    [TestCase("AdvanceSchedule", DateTimeKind.Local)]
-    [TestCase("AdvanceSchedule", DateTimeKind.Unspecified)]
     public void Operation_NonUtcNextOccurrence_DoesNotChangeState(
         string operation,
         DateTimeKind kind)
@@ -654,10 +646,6 @@ public class ReminderTests
 
                 case "Resume":
                     reminder.Resume(nextOccurrenceAt, updatedAt);
-                    break;
-
-                case "AdvanceSchedule":
-                    reminder.AdvanceSchedule(nextOccurrenceAt, updatedAt);
                     break;
 
                 default:
@@ -701,15 +689,9 @@ public class ReminderTests
             createdAt ?? CreatedAt);
     }
 
-    private static Reminder CreateRepeating()
+    private static Reminder CreateRepeating(DateOnly? endLocalDate = null)
     {
-        // Используем любое существующее значение повторения, кроме None.
-        foreach (RepeatUnit unit in Enum.GetValues(typeof(RepeatUnit)))
-            if (unit != RepeatUnit.None)
-                return Create(repeatUnit: unit, repeatInterval: 1);
-
-        throw new InvalidOperationException(
-            "В RepeatUnit отсутствуют варианты периодического расписания.");
+        return Create(repeatUnit: RepeatUnit.Day, repeatInterval: 1, endLocalDate: endLocalDate);
     }
 
     private static Reminder CreateInStatus(ReminderStatus status)
@@ -726,7 +708,7 @@ public class ReminderTests
                 break;
 
             case ReminderStatus.Completed:
-                reminder.AdvanceSchedule(null, FirstOccurrenceAt);
+                reminder.AdvanceSchedule(FirstOccurrenceAt);
                 break;
 
             case ReminderStatus.Deleted:
@@ -806,9 +788,7 @@ public class ReminderTests
                 break;
 
             case "AdvanceSchedule":
-                reminder.AdvanceSchedule(
-                    FirstOccurrenceAt.AddDays(1),
-                    updatedAt);
+                reminder.AdvanceSchedule(updatedAt);
                 break;
 
             case "Delete":
