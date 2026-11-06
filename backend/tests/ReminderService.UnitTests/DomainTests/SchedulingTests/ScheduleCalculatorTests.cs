@@ -152,7 +152,7 @@ public class ScheduleCalculatorTests
         ScheduleCalculator.FindOnOrAfter(schedule, Utc(2011, 12, 30, 12))
             .Should().Be(Utc(2011, 12, 31, 0));
     }
-    
+
     [Test]
     public void SkippedLocalDay_ReturnsEachDistinctUtcInstantOnce()
     {
