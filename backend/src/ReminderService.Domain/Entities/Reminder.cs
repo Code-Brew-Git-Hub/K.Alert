@@ -163,17 +163,21 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void Resume(DateTime nextOccurrenceAt, DateTime updatedAt)
+    public void Resume(DateTime? nextOccurrenceAt, DateTime updatedAt)
     {
         if (Status != ReminderStatus.Paused)
             throw new InvalidOperationException(
                 "Возобновить можно только напоминание на паузе.");
 
-        ValidateUtc(nextOccurrenceAt, nameof(nextOccurrenceAt));
+        if (nextOccurrenceAt.HasValue)
+            ValidateUtc(nextOccurrenceAt.Value, nameof(nextOccurrenceAt));
+
         ValidateChangeTime(updatedAt);
 
-        Status = ReminderStatus.Active;
         NextOccurrenceAt = nextOccurrenceAt;
+        Status = nextOccurrenceAt.HasValue
+            ? ReminderStatus.Active
+            : ReminderStatus.Completed;
 
         Touch(updatedAt);
     }
@@ -187,6 +191,10 @@ public class Reminder
                 "Продвинуть можно только активное расписание.");
 
         ValidateChangeTime(updatedAt);
+
+        if (updatedAt < NextOccurrenceAt!.Value)
+            throw new InvalidOperationException(
+                "Время текущего срабатывания ещё не наступило.");
 
         if (nextOccurrenceAt.HasValue)
         {

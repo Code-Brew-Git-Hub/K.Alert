@@ -388,6 +388,22 @@ public class ReminderTests
     }
 
     [Test]
+    public void Resume_PausedReminderWithoutNextOccurrence_CompletesReminder()
+    {
+        var reminder = Create();
+        reminder.Pause(CreatedAt.AddMinutes(1));
+        var previousVersion = reminder.Version;
+        var updatedAt = FirstOccurrenceAt.AddDays(1);
+
+        reminder.Resume(null, updatedAt);
+
+        reminder.Status.Should().Be(ReminderStatus.Completed);
+        reminder.NextOccurrenceAt.Should().BeNull();
+        reminder.UpdatedAt.Should().Be(updatedAt);
+        reminder.Version.Should().Be(previousVersion + 1);
+    }
+
+    [Test]
     public void AdvanceSchedule_RepeatingReminder_UpdatesNextOccurrence()
     {
         var reminder = CreateRepeating();
