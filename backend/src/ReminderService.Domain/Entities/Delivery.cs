@@ -10,7 +10,7 @@ public class Delivery
         Guid channelId,
         ChannelType channelTypeSnapshot,
         string destinationSnapshot,
-        DateTime createdAt)
+        DateTimeOffset createdAt)
     {
         ValidateId(id, nameof(id));
         ValidateId(occurrenceId, nameof(occurrenceId));
@@ -26,8 +26,6 @@ public class Delivery
             throw new ArgumentException(
                 "Назначение доставки не должно быть пустым.",
                 nameof(destinationSnapshot));
-
-        ValidateUtc(createdAt, nameof(createdAt));
 
         Id = id;
         OccurrenceId = occurrenceId;
@@ -52,25 +50,24 @@ public class Delivery
 
     public DeliveryStatus Status { get; private set; }
     public int AttemptCount { get; private set; }
-    public DateTime? NextAttemptAt { get; private set; }
-    public DateTime? LeaseUntil { get; private set; }
+    public DateTimeOffset? NextAttemptAt { get; private set; }
+    public DateTimeOffset? LeaseUntil { get; private set; }
     public Guid? ClaimToken { get; private set; }
 
-    public DateTime? SentAt { get; private set; }
+    public DateTimeOffset? SentAt { get; private set; }
     public string? LastError { get; private set; }
     public string? ExternalMessageId { get; private set; }
 
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
 
     public void Claim(
         Guid claimToken,
-        DateTime leaseUntil,
-        DateTime now)
+        DateTimeOffset leaseUntil,
+        DateTimeOffset now)
     {
         ValidateId(claimToken, nameof(claimToken));
         ValidateChangeTime(now);
-        ValidateUtc(leaseUntil, nameof(leaseUntil));
 
         if (leaseUntil <= now)
             throw new ArgumentException(
@@ -109,7 +106,7 @@ public class Delivery
 
     public void MarkSent(
         Guid claimToken,
-        DateTime now,
+        DateTimeOffset now,
         string? externalMessageId = null)
     {
         EnsureActiveClaim(claimToken, now);
@@ -126,12 +123,11 @@ public class Delivery
     public void ScheduleRetry(
         Guid claimToken,
         string error,
-        DateTime nextAttemptAt,
-        DateTime now)
+        DateTimeOffset nextAttemptAt,
+        DateTimeOffset now)
     {
         EnsureActiveClaim(claimToken, now);
         ValidateError(error);
-        ValidateUtc(nextAttemptAt, nameof(nextAttemptAt));
 
         if (nextAttemptAt <= now)
             throw new ArgumentException(
@@ -149,7 +145,7 @@ public class Delivery
     public void Block(
         Guid claimToken,
         string error,
-        DateTime now)
+        DateTimeOffset now)
     {
         EnsureActiveClaim(claimToken, now);
         ValidateError(error);
@@ -162,7 +158,7 @@ public class Delivery
         UpdatedAt = now;
     }
 
-    public void Resume(DateTime now)
+    public void Resume(DateTimeOffset now)
     {
         ValidateChangeTime(now);
 
@@ -175,7 +171,7 @@ public class Delivery
         UpdatedAt = now;
     }
 
-    public void Cancel(DateTime now)
+    public void Cancel(DateTimeOffset now)
     {
         ValidateChangeTime(now);
 
@@ -193,7 +189,7 @@ public class Delivery
         UpdatedAt = now;
     }
 
-    private void EnsureActiveClaim(Guid claimToken, DateTime now)
+    private void EnsureActiveClaim(Guid claimToken, DateTimeOffset now)
     {
         ValidateId(claimToken, nameof(claimToken));
         ValidateChangeTime(now);
@@ -217,10 +213,8 @@ public class Delivery
         LeaseUntil = null;
     }
 
-    private void ValidateChangeTime(DateTime now)
+    private void ValidateChangeTime(DateTimeOffset now)
     {
-        ValidateUtc(now, nameof(now));
-
         if (now < UpdatedAt)
             throw new ArgumentException(
                 "Время операции не может быть раньше предыдущего изменения.",
@@ -241,13 +235,5 @@ public class Delivery
             throw new ArgumentException(
                 "Описание ошибки не должно быть пустым.",
                 nameof(error));
-    }
-
-    private static void ValidateUtc(DateTime value, string parameterName)
-    {
-        if (value.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата должна быть указана в UTC.",
-                parameterName);
     }
 }

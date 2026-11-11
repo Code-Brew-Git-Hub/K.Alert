@@ -20,7 +20,6 @@ public class UserTests
         user.Id.Should().Be(UserId);
         user.DisplayName.Should().Be(DisplayName);
         user.CreatedAt.Should().Be(CreatedAt);
-        user.CreatedAt.Kind.Should().Be(DateTimeKind.Utc);
     }
 
     [Test]

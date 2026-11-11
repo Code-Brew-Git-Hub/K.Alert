@@ -662,7 +662,7 @@ public class DeliveryTests
     {
         var (delivery, token) = CreateForOperation(operation);
         var invalidTime = DateTime.SpecifyKind(
-            delivery.UpdatedAt.AddSeconds(1),
+            delivery.UpdatedAt.AddSeconds(1).UtcDateTime,
             kind);
 
         AssertRejected<ArgumentException>(
@@ -734,7 +734,7 @@ public class DeliveryTests
         Delivery delivery,
         string operation,
         Guid token,
-        DateTime now)
+        DateTimeOffset now)
     {
         switch (operation)
         {
@@ -763,7 +763,7 @@ public class DeliveryTests
         Delivery delivery,
         Guid token,
         string operation,
-        DateTime now)
+        DateTimeOffset now)
     {
         switch (operation)
         {

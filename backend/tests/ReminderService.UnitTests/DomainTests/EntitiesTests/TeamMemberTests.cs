@@ -23,7 +23,6 @@ public class TeamMemberTests
         member.UserId.Should().Be(UserId);
         member.Role.Should().Be(role);
         member.JoinedAt.Should().Be(JoinedAt);
-        member.JoinedAt.Kind.Should().Be(DateTimeKind.Utc);
     }
 
     [TestCase(true, TestName = "Constructor_EmptyTeamId_Throws")]

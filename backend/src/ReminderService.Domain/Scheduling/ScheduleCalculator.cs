@@ -4,25 +4,23 @@ namespace ReminderService.Domain.Scheduling;
 
 public static class ScheduleCalculator
 {
-    public static DateTime? FindOnOrAfter(
+    public static DateTimeOffset? FindOnOrAfter(
         ReminderSchedule schedule,
-        DateTime fromUtc)
+        DateTimeOffset fromUtc)
     {
-        ValidateUtc(fromUtc, nameof(fromUtc));
         return Find(schedule, fromUtc, true);
     }
 
-    public static DateTime? FindAfter(
+    public static DateTimeOffset? FindAfter(
         ReminderSchedule schedule,
-        DateTime afterUtc)
+        DateTimeOffset afterUtc)
     {
-        ValidateUtc(afterUtc, nameof(afterUtc));
         return Find(schedule, afterUtc, false);
     }
 
-    private static DateTime? Find(
+    private static DateTimeOffset? Find(
         ReminderSchedule schedule,
-        DateTime boundaryUtc,
+        DateTimeOffset boundaryUtc,
         bool includeBoundary)
     {
         ArgumentNullException.ThrowIfNull(schedule);
@@ -36,7 +34,7 @@ public static class ScheduleCalculator
 
         var start = schedule.StartLocalDate;
         var end = schedule.EndLocalDate ?? DateOnly.MaxValue;
-        var utcDay = DateOnly.FromDateTime(boundaryUtc).DayNumber;
+        var utcDay = DateOnly.FromDateTime(boundaryUtc.UtcDateTime).DayNumber;
 
         // Из-за смещения часового пояса локальная дата может
         // приходиться на предыдущий день относительно даты в UTC.
@@ -54,14 +52,14 @@ public static class ScheduleCalculator
         var firstIndex = Distance(start, earliestDate, schedule.RepeatUnit) / interval;
         var lastIndex = Distance(start, end, schedule.RepeatUnit) / interval;
         var offsets = GetOffsets(zone);
-        DateTime? best = null;
+        DateTimeOffset? best = null;
 
         for (var index = firstIndex; index <= lastIndex; index++)
         {
             var date = GetDate(start, schedule.RepeatUnit, (int)(index * interval));
 
             if (date > end || (best.HasValue
-                               && date.DayNumber > DateOnly.FromDateTime(best.Value).DayNumber + 1))
+                               && date.DayNumber > DateOnly.FromDateTime(best.Value.UtcDateTime).DayNumber + 1))
                 break;
 
             var localTime = date.ToDateTime(schedule.LocalTime);
@@ -115,12 +113,12 @@ public static class ScheduleCalculator
         return offsets;
     }
 
-    private static IEnumerable<DateTime> GetUtcCandidates(
+    private static IEnumerable<DateTimeOffset> GetUtcCandidates(
         DateTime localTime,
         TimeZoneInfo zone,
         HashSet<TimeSpan> offsets)
     {
-        DateTime? shifted = null;
+        DateTimeOffset? shifted = null;
         var exactMatch = false;
 
         foreach (var offset in offsets)
@@ -154,20 +152,12 @@ public static class ScheduleCalculator
             yield return shifted.Value;
     }
 
-    private static DateTime? ToUtc(DateTime localTime, TimeSpan offset)
+    private static DateTimeOffset? ToUtc(DateTime localTime, TimeSpan offset)
     {
         var ticks = localTime.Ticks - offset.Ticks;
 
         return ticks >= DateTime.MinValue.Ticks && ticks <= DateTime.MaxValue.Ticks
-            ? new DateTime(ticks, DateTimeKind.Utc)
+            ? new DateTimeOffset(ticks, TimeSpan.Zero)
             : null;
-    }
-
-    private static void ValidateUtc(DateTime value, string parameterName)
-    {
-        if (value.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата должна быть указана в UTC.",
-                parameterName);
     }
 }

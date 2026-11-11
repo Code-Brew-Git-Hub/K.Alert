@@ -5,10 +5,10 @@ public class ReminderOccurrence
     public ReminderOccurrence(
         Guid id,
         Guid reminderId,
-        DateTime scheduledAt,
+        DateTimeOffset scheduledAt,
         string titleSnapshot,
         string textSnapshot,
-        DateTime createdAt)
+        DateTimeOffset createdAt)
     {
         if (id == Guid.Empty)
             throw new ArgumentException(
@@ -30,9 +30,6 @@ public class ReminderOccurrence
                 "Текст срабатывания не должен быть пустым.",
                 nameof(textSnapshot));
 
-        ValidateUtc(scheduledAt, nameof(scheduledAt));
-        ValidateUtc(createdAt, nameof(createdAt));
-
         if (createdAt < scheduledAt)
             throw new ArgumentException(
                 "Срабатывание нельзя создать раньше запланированного времени.",
@@ -48,16 +45,8 @@ public class ReminderOccurrence
 
     public Guid Id { get; private set; }
     public Guid ReminderId { get; private set; }
-    public DateTime ScheduledAt { get; private set; }
+    public DateTimeOffset ScheduledAt { get; private set; }
     public string TitleSnapshot { get; private set; }
     public string TextSnapshot { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-
-    private static void ValidateUtc(DateTime value, string parameterName)
-    {
-        if (value.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата должна быть указана в UTC.",
-                parameterName);
-    }
+    public DateTimeOffset CreatedAt { get; private set; }
 }

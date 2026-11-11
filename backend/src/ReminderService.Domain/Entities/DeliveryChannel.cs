@@ -10,7 +10,7 @@ public class DeliveryChannel
         string name,
         ChannelType type,
         string settings,
-        DateTime createdAt)
+        DateTimeOffset createdAt)
     {
         if (id == Guid.Empty)
             throw new ArgumentException(
@@ -31,11 +31,6 @@ public class DeliveryChannel
                 type,
                 "Указан неизвестный тип канала.");
 
-        if (createdAt.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата создания должна быть указана в UTC.",
-                nameof(createdAt));
-
         Id = id;
         TeamId = teamId;
         Name = name.Trim();
@@ -51,8 +46,8 @@ public class DeliveryChannel
     public ChannelType Type { get; private set; }
     public string Settings { get; private set; }
     public bool IsEnabled { get; private set; }
-    public DateTime CreatedAt { get; }
-    public DateTime? DeletedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset? DeletedAt { get; private set; }
 
     public void Rename(string name)
     {
@@ -84,14 +79,9 @@ public class DeliveryChannel
         IsEnabled = false;
     }
 
-    public void Delete(DateTime deletedAt)
+    public void Delete(DateTimeOffset deletedAt)
     {
-        if (deletedAt.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата удаления должна быть указана в UTC.",
-                nameof(deletedAt));
-
-        if (deletedAt < CreatedAt)
+       if (deletedAt < CreatedAt)
             throw new ArgumentException(
                 "Дата удаления не может быть раньше даты создания.",
                 nameof(deletedAt));

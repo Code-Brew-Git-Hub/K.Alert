@@ -20,7 +20,6 @@ public class TeamTests
         team.Id.Should().Be(TeamId);
         team.Name.Should().Be(Name);
         team.CreatedAt.Should().Be(CreatedAt);
-        team.CreatedAt.Kind.Should().Be(DateTimeKind.Utc);
     }
 
     [Test]

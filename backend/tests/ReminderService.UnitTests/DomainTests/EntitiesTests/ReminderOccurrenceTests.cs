@@ -115,9 +115,6 @@ public class ReminderOccurrenceTests
         occurrence.TitleSnapshot.Should().Be("Ротация секрета");
         occurrence.TextSnapshot.Should().Be("Нужно обновить секрет.");
         occurrence.CreatedAt.Should().Be(createdAt);
-
-        occurrence.ScheduledAt.Kind.Should().Be(DateTimeKind.Utc);
-        occurrence.CreatedAt.Kind.Should().Be(DateTimeKind.Utc);
     }
 
     [Test]

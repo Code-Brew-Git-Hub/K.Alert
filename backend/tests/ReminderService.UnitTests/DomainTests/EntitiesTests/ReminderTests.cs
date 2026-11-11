@@ -748,7 +748,7 @@ public class ReminderTests
     private static void ChangeSchedule(
         Reminder reminder,
         DateTime? nextOccurrenceAt,
-        DateTime updatedAt)
+        DateTimeOffset updatedAt)
     {
         reminder.ChangeSchedule(
             StartDate.AddDays(1),
@@ -764,7 +764,7 @@ public class ReminderTests
     private static void Execute(
         Reminder reminder,
         string operation,
-        DateTime updatedAt)
+        DateTimeOffset updatedAt)
     {
         switch (operation)
         {

@@ -8,7 +8,7 @@ public class TeamMember
         Guid teamId,
         Guid userId,
         TeamRole role,
-        DateTime joinedAt)
+        DateTimeOffset joinedAt)
     {
         if (teamId == Guid.Empty)
             throw new ArgumentException(
@@ -22,11 +22,6 @@ public class TeamMember
 
         ValidateRole(role);
 
-        if (joinedAt.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата вступления должна быть указана в UTC.",
-                nameof(joinedAt));
-
         TeamId = teamId;
         UserId = userId;
         Role = role;
@@ -36,7 +31,7 @@ public class TeamMember
     public Guid TeamId { get; private set; }
     public Guid UserId { get; private set; }
     public TeamRole Role { get; private set; }
-    public DateTime JoinedAt { get; private set; }
+    public DateTimeOffset JoinedAt { get; private set; }
 
     public void ChangeRole(TeamRole role)
     {

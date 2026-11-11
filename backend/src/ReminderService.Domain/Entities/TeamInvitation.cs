@@ -7,8 +7,8 @@ public class TeamInvitation
         Guid teamId,
         string tokenHash,
         Guid createdByUserId,
-        DateTime createdAt,
-        DateTime expiresAt)
+        DateTimeOffset createdAt,
+        DateTimeOffset expiresAt)
     {
         if (id == Guid.Empty)
             throw new ArgumentException(
@@ -30,9 +30,6 @@ public class TeamInvitation
                 "Идентификатор автора не должен быть пустым.",
                 nameof(createdByUserId));
 
-        ValidateUtc(createdAt, nameof(createdAt));
-        ValidateUtc(expiresAt, nameof(expiresAt));
-
         if (expiresAt <= createdAt)
             throw new ArgumentException(
                 "Срок действия должен заканчиваться позже даты создания.",
@@ -50,13 +47,13 @@ public class TeamInvitation
     public Guid TeamId { get; private set; }
     public string TokenHash { get; private set; }
     public Guid CreatedByUserId { get; private set; }
-    public DateTime CreatedAt { get; }
-    public DateTime ExpiresAt { get; }
+    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset ExpiresAt { get; }
     public Guid? AcceptedByUserId { get; private set; }
-    public DateTime? AcceptedAt { get; private set; }
-    public DateTime? RevokedAt { get; private set; }
+    public DateTimeOffset? AcceptedAt { get; private set; }
+    public DateTimeOffset? RevokedAt { get; private set; }
 
-    public void Accept(Guid userId, DateTime acceptedAt)
+    public void Accept(Guid userId, DateTimeOffset acceptedAt)
     {
         if (userId == Guid.Empty)
             throw new ArgumentException(
@@ -81,7 +78,7 @@ public class TeamInvitation
         AcceptedAt = acceptedAt;
     }
 
-    public void Revoke(DateTime revokedAt)
+    public void Revoke(DateTimeOffset revokedAt)
     {
         ValidateActionTime(revokedAt, nameof(revokedAt));
 
@@ -95,21 +92,11 @@ public class TeamInvitation
         RevokedAt = revokedAt;
     }
 
-    private void ValidateActionTime(DateTime value, string parameterName)
+    private void ValidateActionTime(DateTimeOffset value, string parameterName)
     {
-        ValidateUtc(value, parameterName);
-
-        if (value < CreatedAt)
+       if (value < CreatedAt)
             throw new ArgumentException(
                 "Дата действия не может быть раньше даты создания.",
-                parameterName);
-    }
-
-    private static void ValidateUtc(DateTime value, string parameterName)
-    {
-        if (value.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата должна быть указана в UTC.",
                 parameterName);
     }
 }

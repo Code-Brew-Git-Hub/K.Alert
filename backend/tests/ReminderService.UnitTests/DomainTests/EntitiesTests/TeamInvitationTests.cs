@@ -356,6 +356,6 @@ public class TeamInvitationTests
 
     private sealed record InvitationState(
         Guid? AcceptedByUserId,
-        DateTime? AcceptedAt,
-        DateTime? RevokedAt);
+        DateTimeOffset? AcceptedAt,
+        DateTimeOffset? RevokedAt);
 }

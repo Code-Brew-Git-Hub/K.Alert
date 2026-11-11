@@ -2,7 +2,7 @@ namespace ReminderService.Domain.Entities;
 
 public class Team
 {
-    public Team(Guid id, string name, DateTime createdAt)
+    public Team(Guid id, string name, DateTimeOffset createdAt)
     {
         if (id == Guid.Empty)
             throw new ArgumentException(
@@ -10,12 +10,7 @@ public class Team
                 nameof(id));
 
         ValidateName(name);
-
-        if (createdAt.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата создания должна быть указана в UTC.",
-                nameof(createdAt));
-
+        
         Id = id;
         Name = name.Trim();
         CreatedAt = createdAt;
@@ -23,7 +18,7 @@ public class Team
 
     public Guid Id { get; private set; }
     public string Name { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     public void Rename(string name)
     {

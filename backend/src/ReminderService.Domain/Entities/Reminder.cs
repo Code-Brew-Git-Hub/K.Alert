@@ -16,9 +16,9 @@ public class Reminder
         RepeatUnit repeatUnit,
         int? repeatInterval,
         DateOnly? endLocalDate,
-        DateTime nextOccurrenceAt,
+        DateTimeOffset nextOccurrenceAt,
         Guid createdByUserId,
-        DateTime createdAt)
+        DateTimeOffset createdAt)
     {
         if (id == Guid.Empty)
             throw new ArgumentException(
@@ -42,9 +42,6 @@ public class Reminder
             repeatUnit,
             repeatInterval,
             endLocalDate);
-
-        ValidateUtc(createdAt, nameof(createdAt));
-        ValidateUtc(nextOccurrenceAt, nameof(nextOccurrenceAt));
 
         Id = id;
         TeamId = teamId;
@@ -79,18 +76,18 @@ public class Reminder
     public int? RepeatInterval { get; private set; }
     public DateOnly? EndLocalDate { get; private set; }
 
-    public DateTime? NextOccurrenceAt { get; private set; }
+    public DateTimeOffset? NextOccurrenceAt { get; private set; }
     public ReminderStatus Status { get; private set; }
 
     public Guid CreatedByUserId { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
     public long Version { get; private set; }
 
     public void UpdateContent(
         string title,
         string text,
-        DateTime updatedAt)
+        DateTimeOffset updatedAt)
     {
         EnsureNotDeleted();
         ValidateContent(title, text);
@@ -109,8 +106,8 @@ public class Reminder
         RepeatUnit repeatUnit,
         int? repeatInterval,
         DateOnly? endLocalDate,
-        DateTime? nextOccurrenceAt,
-        DateTime updatedAt)
+        DateTimeOffset? nextOccurrenceAt,
+        DateTimeOffset updatedAt)
     {
         EnsureScheduleEditable();
 
@@ -129,8 +126,6 @@ public class Reminder
                 throw new ArgumentException(
                     "Для активного напоминания нужно следующее срабатывание.",
                     nameof(nextOccurrenceAt));
-
-            ValidateUtc(nextOccurrenceAt.Value, nameof(nextOccurrenceAt));
         }
         else if (nextOccurrenceAt.HasValue)
         {
@@ -150,7 +145,7 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void Pause(DateTime updatedAt)
+    public void Pause(DateTimeOffset updatedAt)
     {
         EnsureScheduleEditable();
         ValidateChangeTime(updatedAt);
@@ -164,14 +159,11 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void Resume(DateTime? nextOccurrenceAt, DateTime updatedAt)
+    public void Resume(DateTimeOffset? nextOccurrenceAt, DateTimeOffset updatedAt)
     {
         if (Status != ReminderStatus.Paused)
             throw new InvalidOperationException(
                 "Возобновить можно только напоминание на паузе.");
-
-        if (nextOccurrenceAt.HasValue)
-            ValidateUtc(nextOccurrenceAt.Value, nameof(nextOccurrenceAt));
 
         ValidateChangeTime(updatedAt);
 
@@ -183,7 +175,7 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void AdvanceSchedule(DateTime updatedAt)
+    public void AdvanceSchedule(DateTimeOffset updatedAt)
     {
         if (Status != ReminderStatus.Active)
             throw new InvalidOperationException(
@@ -212,7 +204,7 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void Delete(DateTime updatedAt)
+    public void Delete(DateTimeOffset updatedAt)
     {
         ValidateChangeTime(updatedAt);
 
@@ -240,17 +232,15 @@ public class Reminder
                 "или напоминания на паузе.");
     }
 
-    private void ValidateChangeTime(DateTime updatedAt)
+    private void ValidateChangeTime(DateTimeOffset updatedAt)
     {
-        ValidateUtc(updatedAt, nameof(updatedAt));
-
         if (updatedAt < UpdatedAt)
             throw new ArgumentException(
                 "Дата изменения не может быть раньше предыдущего изменения.",
                 nameof(updatedAt));
     }
 
-    private void Touch(DateTime updatedAt)
+    private void Touch(DateTimeOffset updatedAt)
     {
         UpdatedAt = updatedAt;
         Version++;
@@ -267,13 +257,5 @@ public class Reminder
             throw new ArgumentException(
                 "Текст напоминания не должен быть пустым.",
                 nameof(text));
-    }
-
-    private static void ValidateUtc(DateTime value, string parameterName)
-    {
-        if (value.Kind != DateTimeKind.Utc)
-            throw new ArgumentException(
-                "Дата должна быть указана в UTC.",
-                parameterName);
     }
 }
