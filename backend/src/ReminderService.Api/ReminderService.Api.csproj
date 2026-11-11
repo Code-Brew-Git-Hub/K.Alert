@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ReminderService.Application\ReminderService.Application.csproj" />
-      <ProjectReference Include="..\ReminderService.Contracts\ReminderService.Contracts.csproj" />
-      <ProjectReference Include="..\ReminderService.Infrastructure\ReminderService.Infrastructure.csproj" />
+        <ProjectReference Include="..\ReminderService.Application\ReminderService.Application.csproj"/>
+        <ProjectReference Include="..\ReminderService.Contracts\ReminderService.Contracts.csproj"/>
+        <ProjectReference Include="..\ReminderService.Infrastructure\ReminderService.Infrastructure.csproj"/>
     </ItemGroup>
 
 </Project>
