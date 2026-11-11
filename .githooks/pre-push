@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+temp_dir=$(mktemp -d)
+check_dir="$temp_dir/check"
+trap 'git worktree remove --force "$check_dir" >/dev/null 2>&1 || :; rmdir "$temp_dir"' EXIT
+
+git_vars=$(git rev-parse --local-env-vars)
+while read -r local_ref sha remote_ref remote_sha; do
+    case "$local_ref" in
+        "(delete)") continue ;;
+    esac
+
+    git worktree add --quiet --detach "$check_dir" "$sha" </dev/null
+    (
+        unset $git_vars
+        cd "$check_dir"
+        jb cleanupcode backend/ReminderService.sln --profile="Built-in: Full Cleanup"
+
+        if ! git diff --quiet HEAD --; then
+            echo "Push blocked: run Full Cleanup and commit the fixes ($local_ref)." >&2
+            git diff --name-only HEAD --
+            exit 1
+        fi
+    ) </dev/null
+    git worktree remove --force "$check_dir"
+done
