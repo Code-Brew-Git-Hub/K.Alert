@@ -7,8 +7,8 @@ namespace ReminderService.UnitTests.DomainTests.EntitiesTests;
 [TestFixture]
 public class DeliveryTests
 {
-    private static readonly DateTime Now =
-        new(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset Now =
+        new(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
 
     // Берём существующее значение, не привязываясь
     // к конкретному набору каналов первой версии.
@@ -162,23 +162,6 @@ public class DeliveryTests
             Now);
 
         action.Should().Throw<ArgumentOutOfRangeException>();
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Constructor_NonUtcCreatedAt_Throws(DateTimeKind kind)
-    {
-        Action action = () => new Delivery(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            ValidChannelType,
-            "{}",
-            DateTime.SpecifyKind(Now, kind));
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("createdAt");
     }
 
     [Test]
@@ -349,14 +332,11 @@ public class DeliveryTests
         string operation)
     {
         var (delivery, token) = CreateProcessingDelivery();
+        var resultAt = Now.AddMinutes(5).ToOffset(TimeSpan.FromHours(-5));
 
         AssertRejected<InvalidOperationException>(
             delivery,
-            () => SaveResult(
-                delivery,
-                operation,
-                token,
-                Now.AddMinutes(5)));
+            () => SaveResult(delivery, operation, token, resultAt));
     }
 
     [TestCase("MarkSent")]
@@ -596,35 +576,6 @@ public class DeliveryTests
             () => delivery.MarkSent(token, Now.AddMinutes(2)));
     }
 
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Claim_NonUtcLeaseUntil_Throws(DateTimeKind kind)
-    {
-        var delivery = CreateDelivery();
-
-        AssertRejected<ArgumentException>(
-            delivery,
-            () => delivery.Claim(
-                Guid.NewGuid(),
-                DateTime.SpecifyKind(Now.AddMinutes(5), kind),
-                Now));
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void ScheduleRetry_NonUtcNextAttemptAt_Throws(DateTimeKind kind)
-    {
-        var (delivery, token) = CreateProcessingDelivery();
-
-        AssertRejected<ArgumentException>(
-            delivery,
-            () => delivery.ScheduleRetry(
-                token,
-                "Ошибка",
-                DateTime.SpecifyKind(Now.AddMinutes(10), kind),
-                Now.AddMinutes(1)));
-    }
-
     [TestCase("Claim")]
     [TestCase("MarkSent")]
     [TestCase("ScheduleRetry")]
@@ -642,36 +593,6 @@ public class DeliveryTests
                 token,
                 operation,
                 delivery.UpdatedAt.AddTicks(-1)));
-    }
-
-    [TestCase("Claim", DateTimeKind.Local)]
-    [TestCase("Claim", DateTimeKind.Unspecified)]
-    [TestCase("MarkSent", DateTimeKind.Local)]
-    [TestCase("MarkSent", DateTimeKind.Unspecified)]
-    [TestCase("ScheduleRetry", DateTimeKind.Local)]
-    [TestCase("ScheduleRetry", DateTimeKind.Unspecified)]
-    [TestCase("Block", DateTimeKind.Local)]
-    [TestCase("Block", DateTimeKind.Unspecified)]
-    [TestCase("Resume", DateTimeKind.Local)]
-    [TestCase("Resume", DateTimeKind.Unspecified)]
-    [TestCase("Cancel", DateTimeKind.Local)]
-    [TestCase("Cancel", DateTimeKind.Unspecified)]
-    public void Operation_NonUtcTime_Throws(
-        string operation,
-        DateTimeKind kind)
-    {
-        var (delivery, token) = CreateForOperation(operation);
-        var invalidTime = DateTime.SpecifyKind(
-            delivery.UpdatedAt.AddSeconds(1).UtcDateTime,
-            kind);
-
-        AssertRejected<ArgumentException>(
-            delivery,
-            () => InvokeOperation(
-                delivery,
-                token,
-                operation,
-                invalidTime));
     }
 
     private static Delivery CreateInStatus(DeliveryStatus status)

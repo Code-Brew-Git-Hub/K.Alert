@@ -10,8 +10,8 @@ public class TeamMemberTests
     private static readonly Guid TeamId = Guid.NewGuid();
     private static readonly Guid UserId = Guid.NewGuid();
 
-    private static readonly DateTime JoinedAt =
-        new(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset JoinedAt =
+        new(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
 
     [TestCase(TeamRole.Owner)]
     [TestCase(TeamRole.Member)]
@@ -55,20 +55,6 @@ public class TeamMemberTests
         action.Should()
             .Throw<ArgumentOutOfRangeException>()
             .WithParameterName("role");
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Constructor_WithNonUtcJoinedAt_Throws(DateTimeKind kind)
-    {
-        var joinedAt = DateTime.SpecifyKind(JoinedAt, kind);
-
-        Action action = () =>
-            new TeamMember(TeamId, UserId, TeamRole.Member, joinedAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("joinedAt");
     }
 
     [TestCase(TeamRole.Member, TeamRole.Owner)]

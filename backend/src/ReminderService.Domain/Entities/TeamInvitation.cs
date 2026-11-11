@@ -94,7 +94,7 @@ public class TeamInvitation
 
     private void ValidateActionTime(DateTimeOffset value, string parameterName)
     {
-       if (value < CreatedAt)
+        if (value < CreatedAt)
             throw new ArgumentException(
                 "Дата действия не может быть раньше даты создания.",
                 parameterName);

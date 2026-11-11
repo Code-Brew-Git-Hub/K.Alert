@@ -10,8 +10,8 @@ public class DeliveryChannelTests
     private static readonly Guid ChannelId = Guid.NewGuid();
     private static readonly Guid TeamId = Guid.NewGuid();
 
-    private static readonly DateTime CreatedAt =
-        new(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset CreatedAt =
+        new(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
 
     private const string Settings = """{"chatId":"-1001234567890"}""";
 
@@ -88,19 +88,6 @@ public class DeliveryChannelTests
         action.Should()
             .Throw<ArgumentOutOfRangeException>()
             .WithParameterName("type");
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Constructor_NonUtcDate_Throws(DateTimeKind kind)
-    {
-        var createdAt = DateTime.SpecifyKind(CreatedAt, kind);
-
-        Action action = () => CreateChannel(createdAt: createdAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("createdAt");
     }
 
     [Test]
@@ -278,30 +265,14 @@ public class DeliveryChannelTests
         channel.Should().BeEquivalentTo(expected);
     }
 
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Delete_NonUtcDate_ThrowsAndPreservesState(DateTimeKind kind)
-    {
-        var channel = CreateChannel();
-        var expected = CreateChannel();
-        var deletedAt = DateTime.SpecifyKind(CreatedAt.AddHours(1), kind);
-
-        var action = () => channel.Delete(deletedAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("deletedAt");
-
-        channel.Should().BeEquivalentTo(expected);
-    }
-
     [Test]
     public void Delete_DateBeforeCreation_ThrowsAndPreservesState()
     {
         var channel = CreateChannel();
         var expected = CreateChannel();
 
-        var action = () => channel.Delete(CreatedAt.AddTicks(-1));
+        var deletedAt = CreatedAt.AddTicks(-1).ToOffset(TimeSpan.FromHours(5));
+        var action = () => channel.Delete(deletedAt);
 
         action.Should()
             .Throw<ArgumentException>()
@@ -340,8 +311,7 @@ public class DeliveryChannelTests
 
     private static DeliveryChannel CreateChannel(
         string name = "Telegram команды",
-        string settings = Settings,
-        DateTime? createdAt = null)
+        string settings = Settings)
     {
         return new DeliveryChannel(
             ChannelId,
@@ -349,6 +319,6 @@ public class DeliveryChannelTests
             name,
             ChannelType.Telegram,
             settings,
-            createdAt ?? CreatedAt);
+            CreatedAt);
     }
 }

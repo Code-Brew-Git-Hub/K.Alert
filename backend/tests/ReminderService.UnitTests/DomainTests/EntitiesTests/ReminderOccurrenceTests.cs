@@ -6,8 +6,8 @@ namespace ReminderService.UnitTests.DomainTests.EntitiesTests;
 [TestFixture]
 public class ReminderOccurrenceTests
 {
-    private static readonly DateTime ScheduledAt =
-        new(2026, 11, 5, 9, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset ScheduledAt =
+        new(2026, 11, 5, 9, 0, 0, TimeSpan.Zero);
 
     [Test]
     public void Constructor_WhenIdIsEmpty_ShouldThrow()
@@ -53,39 +53,11 @@ public class ReminderOccurrenceTests
             .WithParameterName("textSnapshot");
     }
 
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Constructor_WhenScheduledAtIsNotUtc_ShouldThrow(
-        DateTimeKind kind)
-    {
-        var scheduledAt = DateTime.SpecifyKind(ScheduledAt, kind);
-
-        Action action = () => Create(scheduledAt: scheduledAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("scheduledAt");
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Constructor_WhenCreatedAtIsNotUtc_ShouldThrow(
-        DateTimeKind kind)
-    {
-        var createdAt = DateTime.SpecifyKind(ScheduledAt, kind);
-
-        Action action = () => Create(createdAt: createdAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("createdAt");
-    }
-
     [Test]
     public void Constructor_WhenCreatedBeforeScheduledAt_ShouldThrow()
     {
-        Action action = () => Create(
-            createdAt: ScheduledAt.AddTicks(-1));
+        var createdAt = ScheduledAt.AddTicks(-1).ToOffset(TimeSpan.FromHours(5));
+        Action action = () => Create(createdAt: createdAt);
 
         action.Should()
             .Throw<ArgumentException>()
@@ -140,15 +112,14 @@ public class ReminderOccurrenceTests
     private static ReminderOccurrence Create(
         Guid? id = null,
         Guid? reminderId = null,
-        DateTime? scheduledAt = null,
         string? titleSnapshot = "Ротация секрета",
         string? textSnapshot = "Нужно обновить секрет.",
-        DateTime? createdAt = null)
+        DateTimeOffset? createdAt = null)
     {
         return new ReminderOccurrence(
             id ?? Guid.NewGuid(),
             reminderId ?? Guid.NewGuid(),
-            scheduledAt ?? ScheduledAt,
+            ScheduledAt,
             titleSnapshot!,
             textSnapshot!,
             createdAt ?? ScheduledAt);

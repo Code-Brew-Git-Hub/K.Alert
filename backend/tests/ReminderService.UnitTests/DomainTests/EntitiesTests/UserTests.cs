@@ -9,8 +9,8 @@ public class UserTests
     private static readonly Guid UserId = Guid.NewGuid();
     private const string DisplayName = "Oleg";
 
-    private static readonly DateTime CreatedAt =
-        new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset CreatedAt =
+        new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     [Test]
     public void Constructor_WithValidArguments_CreatesUser()
@@ -45,20 +45,6 @@ public class UserTests
         action.Should()
             .Throw<ArgumentException>()
             .WithParameterName("displayName");
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Constructor_WithNonUtcCreatedAt_Throws(DateTimeKind kind)
-    {
-        var createdAt = DateTime.SpecifyKind(CreatedAt, kind);
-
-        Action action = () =>
-            new User(UserId, DisplayName, createdAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("createdAt");
     }
 
     [TestCase("Oleg", "Oleg")]

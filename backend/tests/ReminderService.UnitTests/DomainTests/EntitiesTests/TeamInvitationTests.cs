@@ -6,10 +6,10 @@ namespace ReminderService.UnitTests.DomainTests.EntitiesTests;
 [TestFixture]
 public class TeamInvitationTests
 {
-    private static readonly DateTime CreatedAt =
-        new(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset CreatedAt =
+        new(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
 
-    private static readonly DateTime ExpiresAt = CreatedAt.AddDays(1);
+    private static readonly DateTimeOffset ExpiresAt = CreatedAt.AddDays(1);
 
     [Test]
     public void Constructor_ValidArguments_CreatesUnusedInvitation()
@@ -91,35 +91,6 @@ public class TeamInvitationTests
         invitation.TokenHash.Should().Be(tokenHash);
     }
 
-    [TestCase("createdAt", DateTimeKind.Local)]
-    [TestCase("createdAt", DateTimeKind.Unspecified)]
-    [TestCase("expiresAt", DateTimeKind.Local)]
-    [TestCase("expiresAt", DateTimeKind.Unspecified)]
-    public void Constructor_NonUtcDate_Throws(
-        string parameterName,
-        DateTimeKind kind)
-    {
-        var createdAt = parameterName == "createdAt"
-            ? DateTime.SpecifyKind(CreatedAt, kind)
-            : CreatedAt;
-
-        var expiresAt = parameterName == "expiresAt"
-            ? DateTime.SpecifyKind(ExpiresAt, kind)
-            : ExpiresAt;
-
-        var action = () => new TeamInvitation(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            "token-hash",
-            Guid.NewGuid(),
-            createdAt,
-            expiresAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName(parameterName);
-    }
-
     [TestCase(-1, TestName = "Constructor_ExpirationBeforeCreation_Throws")]
     [TestCase(0, TestName = "Constructor_ExpirationEqualsCreation_Throws")]
     public void Constructor_ExpirationNotAfterCreation_Throws(int offsetSeconds)
@@ -168,23 +139,6 @@ public class TeamInvitationTests
         Snapshot(invitation).Should().Be(before);
     }
 
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Accept_NonUtcDate_ThrowsAndPreservesState(DateTimeKind kind)
-    {
-        var invitation = CreateInvitation();
-        var before = Snapshot(invitation);
-        var acceptedAt = DateTime.SpecifyKind(CreatedAt.AddHours(1), kind);
-
-        var action = () => invitation.Accept(Guid.NewGuid(), acceptedAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("acceptedAt");
-
-        Snapshot(invitation).Should().Be(before);
-    }
-
     [Test]
     public void Accept_DateBeforeCreation_ThrowsAndPreservesState()
     {
@@ -206,7 +160,8 @@ public class TeamInvitationTests
     {
         var invitation = CreateInvitation();
         var userId = Guid.NewGuid();
-        var acceptedAt = ExpiresAt.AddTicks(-1);
+        var acceptedAt = ExpiresAt.AddTicks(-1)
+            .ToOffset(TimeSpan.FromHours(5));
 
         invitation.Accept(userId, acceptedAt);
 
@@ -222,9 +177,10 @@ public class TeamInvitationTests
         var invitation = CreateInvitation();
         var before = Snapshot(invitation);
 
-        var action = () => invitation.Accept(
-            Guid.NewGuid(),
-            ExpiresAt.AddSeconds(offsetSeconds));
+        var acceptedAt = ExpiresAt.AddSeconds(offsetSeconds)
+            .ToOffset(TimeSpan.FromHours(-5));
+
+        var action = () => invitation.Accept(Guid.NewGuid(), acceptedAt);
 
         action.Should().Throw<InvalidOperationException>();
 
@@ -275,23 +231,6 @@ public class TeamInvitationTests
         invitation.RevokedAt.Should().Be(revokedAt);
         invitation.AcceptedByUserId.Should().BeNull();
         invitation.AcceptedAt.Should().BeNull();
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Revoke_NonUtcDate_ThrowsAndPreservesState(DateTimeKind kind)
-    {
-        var invitation = CreateInvitation();
-        var before = Snapshot(invitation);
-        var revokedAt = DateTime.SpecifyKind(CreatedAt.AddHours(1), kind);
-
-        var action = () => invitation.Revoke(revokedAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("revokedAt");
-
-        Snapshot(invitation).Should().Be(before);
     }
 
     [Test]

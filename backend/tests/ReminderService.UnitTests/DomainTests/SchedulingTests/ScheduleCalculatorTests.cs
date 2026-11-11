@@ -166,7 +166,7 @@ public class ScheduleCalculatorTests
 
         var zone = TimeZoneInfo.FindSystemTimeZoneById(schedule.TimeZoneId);
         var firstUtc = Utc(2011, 12, 31, 0);
-        var firstLocal = TimeZoneInfo.ConvertTimeFromUtc(firstUtc, zone);
+        var firstLocal = TimeZoneInfo.ConvertTimeFromUtc(firstUtc.UtcDateTime, zone);
 
         ScheduleCalculator.FindOnOrAfter(schedule, Utc(2011, 12, 30, 12))
             .Should().Be(firstUtc);
@@ -193,24 +193,24 @@ public class ScheduleCalculatorTests
         }
     }
 
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Search_NonUtcBoundary_Throws(DateTimeKind kind)
+    [Test]
+    public void Search_BoundaryWithOffset_UsesUtcDate()
     {
         var schedule = new ReminderSchedule(
-            new DateOnly(2026, 11, 15), new TimeOnly(9, 0),
-            "UTC", RepeatUnit.None, null, null);
-        var boundary = DateTime.SpecifyKind(Utc(2026, 11, 15, 9), kind);
+            new DateOnly(2026, 11, 5), new TimeOnly(23, 0),
+            "Etc/GMT+12", RepeatUnit.None, null, null);
 
-        Action inclusive = () => ScheduleCalculator.FindOnOrAfter(schedule, boundary);
-        Action exclusive = () => ScheduleCalculator.FindAfter(schedule, boundary);
+        var occurrence = Utc(2026, 11, 6, 11);
+        var boundary = occurrence.ToOffset(TimeSpan.FromHours(14));
 
-        inclusive.Should().Throw<ArgumentException>().WithParameterName("fromUtc");
-        exclusive.Should().Throw<ArgumentException>().WithParameterName("afterUtc");
+        ScheduleCalculator.FindOnOrAfter(schedule, boundary)
+            .Should().Be(occurrence);
+        ScheduleCalculator.FindAfter(schedule, boundary)
+            .Should().BeNull();
     }
 
-    private static DateTime Utc(int year, int month, int day, int hour, int minute = 0)
+    private static DateTimeOffset Utc(int year, int month, int day, int hour, int minute = 0)
     {
-        return new DateTime(year, month, day, hour, minute, 0, DateTimeKind.Utc);
+        return new DateTimeOffset(year, month, day, hour, minute, 0, TimeSpan.Zero);
     }
 }

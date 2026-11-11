@@ -9,8 +9,8 @@ public class TeamTests
     private static readonly Guid TeamId = Guid.NewGuid();
     private const string Name = "Backend-1";
 
-    private static readonly DateTime CreatedAt =
-        new(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset CreatedAt =
+        new(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
 
     [Test]
     public void Constructor_WithValidArguments_CreatesTeam()
@@ -45,20 +45,6 @@ public class TeamTests
         action.Should()
             .Throw<ArgumentException>()
             .WithParameterName("name");
-    }
-
-    [TestCase(DateTimeKind.Local)]
-    [TestCase(DateTimeKind.Unspecified)]
-    public void Constructor_WithNonUtcCreatedAt_Throws(DateTimeKind kind)
-    {
-        var createdAt = DateTime.SpecifyKind(CreatedAt, kind);
-
-        Action action = () =>
-            new Team(TeamId, Name, createdAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("createdAt");
     }
 
     [TestCase("Backend-1", "Backend-1")]

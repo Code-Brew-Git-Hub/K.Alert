@@ -10,7 +10,7 @@ public class Team
                 nameof(id));
 
         ValidateName(name);
-        
+
         Id = id;
         Name = name.Trim();
         CreatedAt = createdAt;

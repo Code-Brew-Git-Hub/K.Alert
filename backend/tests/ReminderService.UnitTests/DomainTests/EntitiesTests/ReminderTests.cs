@@ -11,10 +11,11 @@ public class ReminderTests
     private static readonly Guid TeamId = Guid.NewGuid();
     private static readonly Guid AuthorId = Guid.NewGuid();
 
-    private static readonly DateTime CreatedAt =
-        new(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTimeOffset CreatedAt =
+        new(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
 
-    private static readonly DateTime FirstOccurrenceAt = CreatedAt.AddHours(1);
+    private static readonly DateTimeOffset FirstOccurrenceAt =
+        CreatedAt.AddHours(1);
 
     private static readonly DateOnly StartDate = new(2026, 11, 5);
     private static readonly TimeOnly LocalTime = new(16, 0);
@@ -38,7 +39,7 @@ public class ReminderTests
             RepeatUnit = RepeatUnit.None,
             RepeatInterval = (int?)null,
             EndLocalDate = (DateOnly?)null,
-            NextOccurrenceAt = (DateTime?)FirstOccurrenceAt,
+            NextOccurrenceAt = (DateTimeOffset?)FirstOccurrenceAt,
             Status = ReminderStatus.Active,
             CreatedByUserId = AuthorId,
             CreatedAt,
@@ -189,27 +190,6 @@ public class ReminderTests
         reminder.EndLocalDate.Should().Be(StartDate);
     }
 
-    [TestCase("createdAt", DateTimeKind.Local)]
-    [TestCase("createdAt", DateTimeKind.Unspecified)]
-    [TestCase("nextOccurrenceAt", DateTimeKind.Local)]
-    [TestCase("nextOccurrenceAt", DateTimeKind.Unspecified)]
-    public void Constructor_NonUtcDate_Throws(
-        string parameterName,
-        DateTimeKind kind)
-    {
-        Action action = () => Create(
-            createdAt: parameterName == "createdAt"
-                ? DateTime.SpecifyKind(CreatedAt, kind)
-                : CreatedAt,
-            nextOccurrenceAt: parameterName == "nextOccurrenceAt"
-                ? DateTime.SpecifyKind(FirstOccurrenceAt, kind)
-                : FirstOccurrenceAt);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName(parameterName);
-    }
-
     [Test]
     public void UpdateContent_ValidArguments_UpdatesContentAndVersion()
     {
@@ -257,7 +237,9 @@ public class ReminderTests
         var reminder = Create();
         var newStartDate = StartDate.AddDays(1);
         var newTime = new TimeOnly(18, 30);
-        var nextOccurrenceAt = FirstOccurrenceAt.AddDays(1);
+        var nextOccurrenceAt = new DateTimeOffset(
+            newStartDate.ToDateTime(newTime),
+            TimeSpan.Zero);
         var updatedAt = CreatedAt.AddMinutes(1);
 
         reminder.ChangeSchedule(
@@ -464,7 +446,7 @@ public class ReminderTests
     [Test]
     public void AdvanceSchedule_OneTimeAtFallBack_AcceptsSecondOccurrenceThenCompletes()
     {
-        var first = new DateTime(2026, 11, 1, 5, 30, 0, DateTimeKind.Utc);
+        var first = new DateTimeOffset(2026, 11, 1, 5, 30, 0, TimeSpan.Zero);
         var second = first.AddHours(1);
         var reminder = new Reminder(
             ReminderId,
@@ -561,38 +543,8 @@ public class ReminderTests
     {
         var reminder = CreateForOperation(operation);
         var before = Snapshot(reminder);
-        var invalidTime = reminder.UpdatedAt.AddTicks(-1);
-
-        var action = () => Execute(reminder, operation, invalidTime);
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("updatedAt");
-
-        Snapshot(reminder).Should().BeEquivalentTo(before);
-    }
-
-    [TestCase("UpdateContent", DateTimeKind.Local)]
-    [TestCase("UpdateContent", DateTimeKind.Unspecified)]
-    [TestCase("ChangeSchedule", DateTimeKind.Local)]
-    [TestCase("ChangeSchedule", DateTimeKind.Unspecified)]
-    [TestCase("Pause", DateTimeKind.Local)]
-    [TestCase("Pause", DateTimeKind.Unspecified)]
-    [TestCase("Resume", DateTimeKind.Local)]
-    [TestCase("Resume", DateTimeKind.Unspecified)]
-    [TestCase("AdvanceSchedule", DateTimeKind.Local)]
-    [TestCase("AdvanceSchedule", DateTimeKind.Unspecified)]
-    [TestCase("Delete", DateTimeKind.Local)]
-    [TestCase("Delete", DateTimeKind.Unspecified)]
-    public void Operation_NonUtcChangeTime_DoesNotChangeState(
-        string operation,
-        DateTimeKind kind)
-    {
-        var reminder = CreateForOperation(operation);
-        var before = Snapshot(reminder);
-        var invalidTime = DateTime.SpecifyKind(
-            CreatedAt.AddDays(1),
-            kind);
+        var invalidTime = reminder.UpdatedAt.AddTicks(-1)
+            .ToOffset(TimeSpan.FromHours(5));
 
         var action = () => Execute(reminder, operation, invalidTime);
 
@@ -621,45 +573,6 @@ public class ReminderTests
         reminder.Version.Should().Be(previousVersion + 1);
     }
 
-    [TestCase("ChangeSchedule", DateTimeKind.Local)]
-    [TestCase("ChangeSchedule", DateTimeKind.Unspecified)]
-    [TestCase("Resume", DateTimeKind.Local)]
-    [TestCase("Resume", DateTimeKind.Unspecified)]
-    public void Operation_NonUtcNextOccurrence_DoesNotChangeState(
-        string operation,
-        DateTimeKind kind)
-    {
-        var reminder = CreateForOperation(operation);
-        var before = Snapshot(reminder);
-        var nextOccurrenceAt = DateTime.SpecifyKind(
-            FirstOccurrenceAt.AddDays(1),
-            kind);
-        var updatedAt = reminder.UpdatedAt.AddMinutes(1);
-
-        var action = () =>
-        {
-            switch (operation)
-            {
-                case "ChangeSchedule":
-                    ChangeSchedule(reminder, nextOccurrenceAt, updatedAt);
-                    break;
-
-                case "Resume":
-                    reminder.Resume(nextOccurrenceAt, updatedAt);
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(operation));
-            }
-        };
-
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("nextOccurrenceAt");
-
-        Snapshot(reminder).Should().BeEquivalentTo(before);
-    }
-
     private static Reminder Create(
         Guid? id = null,
         Guid? teamId = null,
@@ -669,9 +582,7 @@ public class ReminderTests
         RepeatUnit repeatUnit = RepeatUnit.None,
         int? repeatInterval = null,
         DateOnly? endLocalDate = null,
-        DateTime? nextOccurrenceAt = null,
-        Guid? createdByUserId = null,
-        DateTime? createdAt = null)
+        Guid? createdByUserId = null)
     {
         return new Reminder(
             id ?? ReminderId,
@@ -684,9 +595,9 @@ public class ReminderTests
             repeatUnit,
             repeatInterval,
             endLocalDate,
-            nextOccurrenceAt ?? FirstOccurrenceAt,
+            FirstOccurrenceAt,
             createdByUserId ?? AuthorId,
-            createdAt ?? CreatedAt);
+            CreatedAt);
     }
 
     private static Reminder CreateRepeating(DateOnly? endLocalDate = null)
@@ -747,7 +658,7 @@ public class ReminderTests
 
     private static void ChangeSchedule(
         Reminder reminder,
-        DateTime? nextOccurrenceAt,
+        DateTimeOffset? nextOccurrenceAt,
         DateTimeOffset updatedAt)
     {
         reminder.ChangeSchedule(

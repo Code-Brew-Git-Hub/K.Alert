@@ -81,7 +81,7 @@ public class DeliveryChannel
 
     public void Delete(DateTimeOffset deletedAt)
     {
-       if (deletedAt < CreatedAt)
+        if (deletedAt < CreatedAt)
             throw new ArgumentException(
                 "Дата удаления не может быть раньше даты создания.",
                 nameof(deletedAt));
