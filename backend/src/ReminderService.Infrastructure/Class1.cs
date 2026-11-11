@@ -1,4 +1,4 @@
-﻿namespace ReminderService.Infrastructure;
+namespace ReminderService.Infrastructure;
 
 public class Class1
 {

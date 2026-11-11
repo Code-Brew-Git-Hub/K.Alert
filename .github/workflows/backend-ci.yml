@@ -1,0 +1,31 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [main, develop, 'dev/backend']
+  push:
+    branches: [main, develop, 'dev/backend']
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - name: Verify formatting
+        run: dotnet format whitespace backend --folder --verify-no-changes
+      - name: Restore
+        run: dotnet restore backend/ReminderService.sln
+      - name: Build
+        run: dotnet build backend/ReminderService.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test backend/ReminderService.sln --configuration Release --no-build
