@@ -16,7 +16,6 @@ public class Reminder
         RepeatUnit repeatUnit,
         int? repeatInterval,
         DateOnly? endLocalDate,
-        DateTimeOffset nextOccurrenceAt,
         Guid createdByUserId,
         DateTimeOffset createdAt)
     {
@@ -36,12 +35,18 @@ public class Reminder
                 nameof(createdByUserId));
 
         ValidateContent(title, text);
-        ReminderSchedule.Validate(
+
+        var schedule = new ReminderSchedule(
             startLocalDate,
+            localTime,
             timeZoneId,
             repeatUnit,
             repeatInterval,
             endLocalDate);
+
+        var nextOccurrenceAt = ScheduleCalculator.FindOnOrAfter(schedule, createdAt)
+                               ?? throw new ArgumentException(
+                                   "В расписании нет срабатываний на момент создания или позже.");
 
         Id = id;
         TeamId = teamId;
@@ -106,32 +111,36 @@ public class Reminder
         RepeatUnit repeatUnit,
         int? repeatInterval,
         DateOnly? endLocalDate,
-        DateTimeOffset? nextOccurrenceAt,
         DateTimeOffset updatedAt)
     {
         EnsureScheduleEditable();
 
-        ReminderSchedule.Validate(
-            startLocalDate,
-            timeZoneId,
-            repeatUnit,
-            repeatInterval,
-            endLocalDate);
-
         ValidateChangeTime(updatedAt);
+
+        DateTimeOffset? nextOccurrenceAt = null;
 
         if (Status == ReminderStatus.Active)
         {
-            if (!nextOccurrenceAt.HasValue)
-                throw new ArgumentException(
-                    "Для активного напоминания нужно следующее срабатывание.",
-                    nameof(nextOccurrenceAt));
+            var schedule = new ReminderSchedule(
+                startLocalDate,
+                localTime,
+                timeZoneId,
+                repeatUnit,
+                repeatInterval,
+                endLocalDate);
+
+            nextOccurrenceAt = ScheduleCalculator.FindOnOrAfter(schedule, updatedAt)
+                               ?? throw new ArgumentException(
+                                   "В новом расписании нет срабатываний на момент изменения или позже.");
         }
-        else if (nextOccurrenceAt.HasValue)
+        else
         {
-            throw new ArgumentException(
-                "У напоминания на паузе следующее срабатывание отсутствует.",
-                nameof(nextOccurrenceAt));
+            ReminderSchedule.Validate(
+                startLocalDate,
+                timeZoneId,
+                repeatUnit,
+                repeatInterval,
+                endLocalDate);
         }
 
         StartLocalDate = startLocalDate;
@@ -159,13 +168,23 @@ public class Reminder
         Touch(updatedAt);
     }
 
-    public void Resume(DateTimeOffset? nextOccurrenceAt, DateTimeOffset updatedAt)
+    public void Resume(DateTimeOffset updatedAt)
     {
         if (Status != ReminderStatus.Paused)
             throw new InvalidOperationException(
                 "Возобновить можно только напоминание на паузе.");
 
         ValidateChangeTime(updatedAt);
+
+        var schedule = new ReminderSchedule(
+            StartLocalDate,
+            LocalTime,
+            TimeZoneId,
+            RepeatUnit,
+            RepeatInterval,
+            EndLocalDate);
+
+        var nextOccurrenceAt = ScheduleCalculator.FindOnOrAfter(schedule, updatedAt);
 
         NextOccurrenceAt = nextOccurrenceAt;
         Status = nextOccurrenceAt.HasValue

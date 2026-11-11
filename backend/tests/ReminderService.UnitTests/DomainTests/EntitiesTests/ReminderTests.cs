@@ -249,7 +249,6 @@ public class ReminderTests
             RepeatUnit.None,
             null,
             newStartDate,
-            nextOccurrenceAt,
             updatedAt);
 
         reminder.StartLocalDate.Should().Be(newStartDate);
@@ -272,7 +271,7 @@ public class ReminderTests
 
         var updatedAt = CreatedAt.AddMinutes(2);
 
-        ChangeSchedule(reminder, null, updatedAt);
+        ChangeSchedule(reminder, updatedAt);
 
         reminder.Status.Should().Be(ReminderStatus.Paused);
         reminder.NextOccurrenceAt.Should().BeNull();
@@ -280,27 +279,22 @@ public class ReminderTests
         reminder.Version.Should().Be(3);
     }
 
-    [TestCase(false, TestName = "ChangeSchedule_ActiveWithoutNextOccurrence_Throws")]
-    [TestCase(true, TestName = "ChangeSchedule_PausedWithNextOccurrence_Throws")]
-    public void ChangeSchedule_InconsistentNextOccurrence_DoesNotChangeState(
-        bool paused)
+    [Test]
+    public void ChangeSchedule_ActiveWithoutFutureOccurrence_DoesNotChangeState()
     {
         var reminder = Create();
-
-        if (paused)
-            reminder.Pause(CreatedAt.AddMinutes(1));
-
         var before = Snapshot(reminder);
 
-        var action = () => ChangeSchedule(
-            reminder,
-            paused ? FirstOccurrenceAt : null,
-            CreatedAt.AddMinutes(2));
+        var action = () => reminder.ChangeSchedule(
+            StartDate,
+            LocalTime,
+            TimeZoneId,
+            RepeatUnit.None,
+            null,
+            null,
+            FirstOccurrenceAt.AddTicks(1));
 
-        action.Should()
-            .Throw<ArgumentException>()
-            .WithParameterName("nextOccurrenceAt");
-
+        action.Should().Throw<ArgumentException>();
         Snapshot(reminder).Should().BeEquivalentTo(before);
     }
 
@@ -317,7 +311,6 @@ public class ReminderTests
             RepeatUnit.None,
             1,
             null,
-            FirstOccurrenceAt,
             CreatedAt.AddMinutes(1));
 
         action.Should()
@@ -359,13 +352,12 @@ public class ReminderTests
         var reminder = Create();
         reminder.Pause(CreatedAt.AddMinutes(1));
 
-        var nextOccurrenceAt = FirstOccurrenceAt.AddDays(1);
         var updatedAt = CreatedAt.AddMinutes(2);
 
-        reminder.Resume(nextOccurrenceAt, updatedAt);
+        reminder.Resume(updatedAt);
 
         reminder.Status.Should().Be(ReminderStatus.Active);
-        reminder.NextOccurrenceAt.Should().Be(nextOccurrenceAt);
+        reminder.NextOccurrenceAt.Should().Be(FirstOccurrenceAt);
         reminder.UpdatedAt.Should().Be(updatedAt);
         reminder.Version.Should().Be(3);
     }
@@ -378,7 +370,7 @@ public class ReminderTests
         var previousVersion = reminder.Version;
         var updatedAt = FirstOccurrenceAt.AddDays(1);
 
-        reminder.Resume(null, updatedAt);
+        reminder.Resume(updatedAt);
 
         reminder.Status.Should().Be(ReminderStatus.Completed);
         reminder.NextOccurrenceAt.Should().BeNull();
@@ -437,7 +429,7 @@ public class ReminderTests
 
         var action = () => reminder.ChangeSchedule(
             StartDate, LocalTime, "Invalid/TimeZone", RepeatUnit.None,
-            null, null, null, CreatedAt);
+            null, null, CreatedAt);
 
         action.Should().Throw<ArgumentException>().WithParameterName("timeZoneId");
         Snapshot(reminder).Should().BeEquivalentTo(before);
@@ -459,7 +451,6 @@ public class ReminderTests
             RepeatUnit.None,
             null,
             null,
-            first,
             AuthorId,
             first.AddDays(-1));
 
@@ -595,7 +586,6 @@ public class ReminderTests
             repeatUnit,
             repeatInterval,
             endLocalDate,
-            FirstOccurrenceAt,
             createdByUserId ?? AuthorId,
             CreatedAt);
     }
@@ -658,7 +648,6 @@ public class ReminderTests
 
     private static void ChangeSchedule(
         Reminder reminder,
-        DateTimeOffset? nextOccurrenceAt,
         DateTimeOffset updatedAt)
     {
         reminder.ChangeSchedule(
@@ -668,7 +657,6 @@ public class ReminderTests
             RepeatUnit.None,
             null,
             null,
-            nextOccurrenceAt,
             updatedAt);
     }
 
@@ -686,7 +674,6 @@ public class ReminderTests
             case "ChangeSchedule":
                 ChangeSchedule(
                     reminder,
-                    FirstOccurrenceAt.AddDays(1),
                     updatedAt);
                 break;
 
@@ -695,7 +682,7 @@ public class ReminderTests
                 break;
 
             case "Resume":
-                reminder.Resume(FirstOccurrenceAt.AddDays(1), updatedAt);
+                reminder.Resume(updatedAt);
                 break;
 
             case "AdvanceSchedule":
