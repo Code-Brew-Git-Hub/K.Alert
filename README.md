@@ -1,5 +1,13 @@
 # Сервис управления напоминаниями
 
+## Аналитика проекта
+
+- [Обзор проекта](docs/01-project-overview.md)
+- [Требования к первой версии](docs/02-requirements.md)
+- [Архитектура](docs/03-architecture.md)
+- [Модель данных](docs/04-data-model.md)
+- [Контракты API](docs/05-api-contracts.md)
+
 ## Проверки backend
 
 Из корня репозитория с установленным SDK .NET 10:
